@@ -21,6 +21,7 @@ const DEMO = {
   status: 'ready',
   incomplete: [],
   error: null,
+  connected: false,
 }
 
 let current = DEMO
@@ -73,7 +74,7 @@ export async function loadDataset() {
     // Una base de datos vacía no es un error: aún no se ha metido nada. Se
     // sigue enseñando la demostración hasta que haya un mes completo.
     if (!loaded.length) {
-      publish({ ...DEMO, status: 'ready', source: 'demo', incomplete })
+      publish({ ...DEMO, status: 'ready', source: 'demo', incomplete, connected: true })
       return
     }
 
@@ -84,8 +85,9 @@ export async function loadDataset() {
       status: 'ready',
       incomplete,
       error: null,
+      connected: true,
     })
   } catch (error) {
-    publish({ ...DEMO, error: error.message ?? String(error) })
+    publish({ ...DEMO, error: error.message ?? String(error), connected: true })
   }
 }

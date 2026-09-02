@@ -12,7 +12,7 @@ import useDataset from '../../data/useDataset'
  * y queda por debajo de los formularios modales (z-40 frente a z-50).
  */
 export default function DemoNotice() {
-  const { source, error, incomplete } = useDataset()
+  const { source, error, incomplete, connected } = useDataset()
 
   const variant = error
     ? {
@@ -26,11 +26,20 @@ export default function DemoNotice() {
           title: 'Versiune de test',
           body: 'Cifrele vin din baza de date. Panoul este încă în probe și nu este public.',
         }
-      : {
-          icon: FlaskConical,
-          title: 'Versiune de test',
-          body: 'Toate cifrele din acest panou sunt inventate și servesc doar pentru a demonstra funcționarea. Nu reprezintă date reale.',
-        }
+      : connected
+        ? {
+            // Con las políticas de seguridad activas, «tabla vacía» y «sin
+            // permiso para leerla» se ven igual desde el navegador. Decirlo
+            // evita media hora buscando un fallo que no existe.
+            icon: Database,
+            title: 'Baza de date este goală',
+            body: 'Conexiunea funcționează, dar încă nu există nicio lună înregistrată, așa că se afișează cifre inventate. Dacă ai adăugat deja date, verifică politicile de securitate.',
+          }
+        : {
+            icon: FlaskConical,
+            title: 'Versiune de test',
+            body: 'Toate cifrele din acest panou sunt inventate și servesc doar pentru a demonstra funcționarea. Nu reprezintă date reale.',
+          }
 
   const Icon = variant.icon
 
