@@ -147,6 +147,30 @@ avisos aparecen en la esquina cuando algo no encaja:
   crecimiento saldrían mal en silencio. El aviso dice qué mes y qué red.
 
 
+## En el móvil
+
+El panel se usa igual desde el teléfono, no es una versión recortada.
+
+**La navegación va en un panel lateral.** Ocho secciones no caben en una fila
+de pestañas sin convertirse en un carrusel que hay que arrastrar a ciegas, así
+que en pantallas pequeñas el botón de menú abre la misma lista del escritorio,
+con la descripción de cada sección. Reutiliza el mismo `Drawer` que los
+formularios, con Escape, foco atrapado y scroll bloqueado.
+
+**Los gráficos se adaptan de verdad, no solo se encogen.** El eje vertical se
+estrecha (de 64 a 56 px: a menos, «220,0 K» sale cortado), las etiquetas del eje
+horizontal muestran un mes de cada dos para que no se pisen, y la altura baja a
+240 px para que quepa algo más en pantalla.
+
+**Los controles son para el dedo**, no para el ratón: los filtros de mes, red y
+estado suben a 40 px de alto. La cifra principal pasa de 52 a 40 px y el aviso
+fijo de abajo usa un texto más corto, para no comerse la pantalla.
+
+**Cada sección se carga cuando se abre.** Con recharts dentro, cargarlas todas
+de golpe son cientos de kilobytes que en el móvil se notan. Siendo honestos: el
+primer pintado solo baja de 257 a ~240 kB comprimidos, porque recharts entra
+igual con el resumen; lo que sí cambia es que moverse entre secciones ya solo
+descarga unos pocos kilobytes.
 ## Comparativas honestas
 
 - Un periodo **en curso no se compara** contra uno cerrado: el trimestre o el año
@@ -301,7 +325,7 @@ src/
     navigation.js   secciones del panel
   components/
     entry/          formularios de datos mensuales y de campañas
-    layout/         barra lateral, barra superior, logo, aviso de pruebas
+    layout/         barra lateral, barra superior, navegación móvil, aviso
     ui/             Drawer, Card, StatTile, DeltaBadge, Sparkline, tablas, filtros
     charts/         ChartFrame + tipos de gráfico + tema común de ejes y marcas
   views/            una por sección

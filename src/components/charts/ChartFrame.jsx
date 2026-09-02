@@ -3,6 +3,7 @@ import { Table2, ChartSpline } from 'lucide-react'
 import Card from '../ui/Card'
 import DataTable from '../ui/DataTable'
 import DownloadCsvButton from '../ui/DownloadCsvButton'
+import useIsMobile from '../ui/useIsMobile'
 
 /**
  * Marco común de todos los gráficos: título, subtítulo, leyenda (obligatoria a
@@ -21,10 +22,11 @@ export default function ChartFrame({
   children,
 }) {
   const [asTable, setAsTable] = useState(false)
+  const isMobile = useIsMobile()
   const id = useId()
 
   return (
-    <Card className={`p-5 sm:p-6 ${className}`} delay={delay}>
+    <Card className={`p-4 sm:p-6 ${className}`} delay={delay}>
       <div className="flex items-start justify-between gap-3">
         {/* El bloque de texto encoge; los controles nunca bajan de línea. */}
         <div className="min-w-0 flex-1">
@@ -82,7 +84,9 @@ export default function ChartFrame({
         </ul>
       ) : null}
 
-      <div className="mt-4" style={asTable ? undefined : { height }}>
+      {/* En el móvil los gráficos se acortan: a la altura de escritorio no cabe
+          nada más en pantalla y obliga a desplazarse por cada uno. */}
+      <div className="mt-4" style={asTable ? undefined : { height: isMobile ? Math.min(height, 240) : height }}>
         {asTable ? <DataTable columns={table.columns} rows={table.rows} /> : children}
       </div>
     </Card>

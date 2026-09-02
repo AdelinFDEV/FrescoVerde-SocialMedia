@@ -14,7 +14,7 @@ export default function TableCard({
   delay = 0,
 }) {
   return (
-    <Card className="p-5 sm:p-6" delay={delay}>
+    <Card className="p-4 sm:p-6" delay={delay}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <h2 className="text-base font-semibold tracking-tight text-ink-900">{title}</h2>

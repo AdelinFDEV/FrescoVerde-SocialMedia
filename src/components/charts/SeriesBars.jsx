@@ -8,7 +8,8 @@ import {
   YAxis,
 } from 'recharts'
 import ChartTooltip from './ChartTooltip'
-import { ANIM, BAR, STACK_GAP, axisProps, cursorFill, gridProps, stagger, yAxisProps } from './chartTheme'
+import useIsMobile from '../ui/useIsMobile'
+import { ANIM, BAR, STACK_GAP, cursorFill, gridProps, stagger, useResponsiveAxes } from './chartTheme'
 
 /**
  * Columnas para series arbitrarias (no solo redes). Apiladas llevan 2 px de
@@ -23,18 +24,19 @@ export default function SeriesBars({
   stacked = true,
   showTotal = true,
 }) {
+  const axes = useResponsiveAxes(useIsMobile())
   const last = series.length - 1
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart
         data={data}
-        margin={{ top: 8, right: 16, bottom: 0, left: 0 }}
+        margin={axes.margin}
         barCategoryGap="28%"
         barGap={6}
       >
         <CartesianGrid {...gridProps} />
-        <XAxis dataKey={xKey} {...axisProps} />
-        <YAxis {...yAxisProps} tickFormatter={tickFormat ?? format} />
+        <XAxis dataKey={xKey} {...axes.x} />
+        <YAxis {...axes.y} tickFormatter={tickFormat ?? format} />
         <Tooltip
           cursor={cursorFill}
           content={<ChartTooltip format={format} total={stacked && showTotal} />}

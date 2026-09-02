@@ -11,7 +11,18 @@ const FOCUSABLE =
  * Escape, llevar el foco dentro al abrirse, no dejar que el tabulador se escape
  * al fondo, devolver el foco a quien lo abrió y bloquear el scroll de la página.
  */
-export default function Drawer({ open, onClose, title, subtitle, toolbar, footer, children }) {
+export default function Drawer({
+  open,
+  onClose,
+  title,
+  subtitle,
+  toolbar,
+  footer,
+  side = 'right',
+  width = 'max-w-xl',
+  children,
+}) {
+  const fromLeft = side === 'left'
   const panelRef = useRef(null)
   const openerRef = useRef(null)
 
@@ -66,7 +77,10 @@ export default function Drawer({ open, onClose, title, subtitle, toolbar, footer
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end" onKeyDown={onKeyDown}>
+    <div
+      className={`fixed inset-0 z-50 flex ${fromLeft ? 'justify-start' : 'justify-end'}`}
+      onKeyDown={onKeyDown}
+    >
       <button className="absolute inset-0 bg-ink-900/40" onClick={onClose} aria-label="Închide formularul" />
 
       <aside
@@ -74,10 +88,13 @@ export default function Drawer({ open, onClose, title, subtitle, toolbar, footer
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative flex h-full w-full max-w-xl flex-col bg-white shadow-2xl"
-        style={{ animation: 'drawerIn 0.35s cubic-bezier(0.22,1,0.36,1)' }}
+        className={`relative flex h-full w-full ${width} flex-col bg-white shadow-2xl`}
+        style={{ animation: `${fromLeft ? 'drawerInLeft' : 'drawerIn'} 0.3s cubic-bezier(0.22,1,0.36,1)` }}
       >
-        <style>{`@keyframes drawerIn { from { transform: translateX(24px); opacity: 0 } }`}</style>
+        <style>{`
+          @keyframes drawerIn { from { transform: translateX(24px); opacity: 0 } }
+          @keyframes drawerInLeft { from { transform: translateX(-24px); opacity: 0 } }
+        `}</style>
 
         <header className="flex items-start justify-between gap-4 border-b border-ink-100 px-6 py-4">
           <div>

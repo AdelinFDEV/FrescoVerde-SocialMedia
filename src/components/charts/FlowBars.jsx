@@ -10,17 +10,8 @@ import {
   YAxis,
 } from 'recharts'
 import ChartTooltip from './ChartTooltip'
-import {
-  ANIM,
-  AXIS_TEXT,
-  BAR,
-  LINE,
-  SURFACE,
-  axisProps,
-  cursorFill,
-  gridProps,
-  stagger,
-} from './chartTheme'
+import useIsMobile from '../ui/useIsMobile'
+import { ANIM, BAR, LINE, SURFACE, cursorFill, gridProps, stagger, useResponsiveAxes } from './chartTheme'
 
 /**
  * Flujo de comunidad: altas por encima de cero, bajas por debajo y la línea de
@@ -36,16 +27,14 @@ export default function FlowBars({
   tickFormat,
   xKey = 'label',
 }) {
+  const axes = useResponsiveAxes(useIsMobile())
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <ComposedChart data={data} margin={{ top: 8, right: 16, bottom: 0, left: 0 }} barCategoryGap="30%">
+      <ComposedChart data={data} margin={axes.margin} barCategoryGap="30%">
         <CartesianGrid {...gridProps} />
-        <XAxis dataKey={xKey} {...axisProps} />
+        <XAxis dataKey={xKey} {...axes.x} />
         <YAxis
-          tickLine={false}
-          axisLine={false}
-          tick={{ fontSize: 12, fill: AXIS_TEXT }}
-          width={64}
+          {...axes.y}
           tickFormatter={tickFormat ?? format}
         />
         <Tooltip

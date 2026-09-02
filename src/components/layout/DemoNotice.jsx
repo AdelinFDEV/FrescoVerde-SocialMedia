@@ -19,12 +19,14 @@ export default function DemoNotice() {
         icon: TriangleAlert,
         title: 'Datele nu s-au încărcat',
         body: 'Baza de date nu a răspuns, așa că se afișează cifre inventate. Reîncarcă pagina pentru a încerca din nou.',
+        short: 'Baza de date nu a răspuns; cifrele afișate sunt inventate.',
       }
     : source === 'supabase'
       ? {
           icon: Database,
           title: 'Versiune de test',
           body: 'Cifrele vin din baza de date. Panoul este încă în probe și nu este public.',
+          short: 'Cifre reale din baza de date. Panou în probe, nepublic.',
         }
       : connected
         ? {
@@ -34,11 +36,13 @@ export default function DemoNotice() {
             icon: Database,
             title: 'Baza de date este goală',
             body: 'Conexiunea funcționează, dar încă nu există nicio lună înregistrată, așa că se afișează cifre inventate. Dacă ai adăugat deja date, verifică politicile de securitate.',
+            short: 'Nicio lună înregistrată încă: cifrele sunt inventate.',
           }
         : {
             icon: FlaskConical,
             title: 'Versiune de test',
             body: 'Toate cifrele din acest panou sunt inventate și servesc doar pentru a demonstra funcționarea. Nu reprezintă date reale.',
+            short: 'Toate cifrele sunt inventate, doar pentru demonstrație.',
           }
 
   const Icon = variant.icon
@@ -49,14 +53,19 @@ export default function DemoNotice() {
       aria-label="Aviz: versiune de test"
       className="fixed inset-x-0 bottom-0 z-40 sm:inset-x-auto sm:bottom-5 sm:right-5 sm:max-w-sm lg:bottom-4 lg:left-4 lg:right-auto lg:w-52"
     >
-      <div className="flex items-start gap-3 border-t border-ink-600 bg-ink-700 px-4 py-3 text-white shadow-[0_-4px_20px_-8px_rgba(28,35,43,0.45)] sm:rounded-2xl sm:border sm:shadow-[0_16px_40px_-16px_rgba(28,35,43,0.55)] lg:flex-col lg:gap-2 lg:shadow-none">
-        <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg bg-ink-600 text-neon-400 lg:mt-0">
-          <Icon size={15} strokeWidth={2.4} />
+      <div className="flex items-start gap-2.5 border-t border-ink-600 bg-ink-700 px-3.5 py-2.5 text-white shadow-[0_-4px_20px_-8px_rgba(28,35,43,0.45)] sm:gap-3 sm:rounded-2xl sm:border sm:px-4 sm:py-3 sm:shadow-[0_16px_40px_-16px_rgba(28,35,43,0.55)] lg:flex-col lg:gap-2 lg:shadow-none">
+        <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-lg bg-ink-600 text-neon-400 sm:size-7 lg:mt-0">
+          <Icon size={14} strokeWidth={2.4} />
         </span>
 
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-neon-400">{variant.title}</p>
-          <p className="mt-0.5 text-sm leading-relaxed text-ink-100 lg:text-xs">{variant.body}</p>
+          <p className="text-xs font-semibold text-neon-400 sm:text-sm">{variant.title}</p>
+          {/* En el móvil el aviso es una barra fija: si ocupa cuatro líneas se
+              come la pantalla, así que ahí va el texto corto. */}
+          <p className="mt-0.5 text-xs leading-relaxed text-ink-100 sm:text-sm lg:text-xs">
+            <span className="sm:hidden">{variant.short}</span>
+            <span className="hidden sm:inline">{variant.body}</span>
+          </p>
 
           {/* Un mes con datos de una sola red no se muestra: mezclarlo con los
               completos daría saltos falsos en los gráficos. */}
@@ -78,7 +87,9 @@ export default function DemoNotice() {
             </p>
           ) : null}
 
-          <p className="mt-1.5 text-xs font-medium text-ink-300">Realizat de George Adelin</p>
+          <p className="mt-1 text-[11px] font-medium text-ink-300 sm:mt-1.5 sm:text-xs">
+            Realizat de George Adelin
+          </p>
         </div>
       </div>
     </aside>

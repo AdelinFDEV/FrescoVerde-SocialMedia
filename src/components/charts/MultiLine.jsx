@@ -8,16 +8,18 @@ import {
   YAxis,
 } from 'recharts'
 import ChartTooltip from './ChartTooltip'
-import { ANIM, LINE, activeDot, axisProps, cursorLine, gridProps, stagger, yAxisProps } from './chartTheme'
+import useIsMobile from '../ui/useIsMobile'
+import { ANIM, LINE, activeDot, cursorLine, gridProps, stagger, useResponsiveAxes } from './chartTheme'
 
 /** Una línea por red. Sin segundo eje: todas las series comparten escala. */
 export default function MultiLine({ data, networks, metric, format, tickFormat, xKey = 'label' }) {
+  const axes = useResponsiveAxes(useIsMobile())
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={data} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
+      <LineChart data={data} margin={axes.margin}>
         <CartesianGrid {...gridProps} />
-        <XAxis dataKey={xKey} {...axisProps} />
-        <YAxis {...yAxisProps} tickFormatter={tickFormat ?? format} />
+        <XAxis dataKey={xKey} {...axes.x} />
+        <YAxis {...axes.y} tickFormatter={tickFormat ?? format} />
         <Tooltip
           cursor={cursorLine}
           content={<ChartTooltip format={format} total={false} />}

@@ -79,10 +79,10 @@ export default function Rezumat({ year, networks, activeIds }) {
   return (
     <div className="space-y-5">
       <Card className="overflow-hidden">
-        <div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-center">
+        <div className="grid gap-5 p-5 sm:gap-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-center">
           <div>
             <p className="text-sm font-medium text-ink-500">Comunitate totală · la final de perioadă</p>
-            <p className="mt-2 text-[52px] font-semibold leading-none tracking-tight text-ink-900">
+            <p className="mt-2 text-[40px] font-semibold leading-none tracking-tight text-ink-900 sm:text-[52px]">
               {fmtInt(hero)}
             </p>
             <div className="mt-4">
@@ -95,7 +95,7 @@ export default function Rezumat({ year, networks, activeIds }) {
             </p>
           </div>
 
-          <div className="h-56 lg:h-64">
+          <div className="h-48 sm:h-56 lg:h-64">
             <TrendArea
               data={rows}
               dataKey="followers"

@@ -1,35 +1,38 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import DataEntryDrawer from './components/entry/DataEntryDrawer'
 import DemoNotice from './components/layout/DemoNotice'
+import MobileNav from './components/layout/MobileNav'
 import Sidebar from './components/layout/Sidebar'
 import Topbar from './components/layout/Topbar'
 import { ALL_NETWORK_IDS, NETWORKS } from './data/networks'
 import { loadDataset } from './data/dataset'
 import useDataset from './data/useDataset'
-import Anual from './views/Anual'
-import Audienta from './views/Audienta'
-import Campanii from './views/Campanii'
-import Crestere from './views/Crestere'
-import Interactiuni from './views/Interactiuni'
-import Investitie from './views/Investitie'
-import Rezumat from './views/Rezumat'
-import Trimestrial from './views/Trimestrial'
 
+// Cada sección se carga cuando se abre. Con recharts dentro, cargarlas todas de
+// golpe son cientos de kilobytes que en el móvil se notan; así solo viaja la
+// que se está mirando.
 const VIEW_COMPONENTS = {
-  rezumat: Rezumat,
-  crestere: Crestere,
-  audienta: Audienta,
-  interactiuni: Interactiuni,
-  investitie: Investitie,
-  campanii: Campanii,
-  trimestrial: Trimestrial,
-  anual: Anual,
+  rezumat: lazy(() => import('./views/Rezumat')),
+  crestere: lazy(() => import('./views/Crestere')),
+  audienta: lazy(() => import('./views/Audienta')),
+  interactiuni: lazy(() => import('./views/Interactiuni')),
+  investitie: lazy(() => import('./views/Investitie')),
+  campanii: lazy(() => import('./views/Campanii')),
+  trimestrial: lazy(() => import('./views/Trimestrial')),
+  anual: lazy(() => import('./views/Anual')),
 }
+
+const Loading = ({ text = 'Se încarcă…' }) => (
+  <div className="grid min-h-48 place-items-center">
+    <p className="animate-fade text-sm font-medium text-ink-400">{text}</p>
+  </div>
+)
 
 export default function App() {
   const [view, setView] = useState('rezumat')
   const [activeIds, setActiveIds] = useState(ALL_NETWORK_IDS)
   const [entryOpen, setEntryOpen] = useState(false)
+  const [navOpen, setNavOpen] = useState(false)
   // `null` significa «el más reciente»: así el año elegido no se queda
   // apuntando a uno que los datos cargados ni siquiera tienen.
   const [pickedYear, setPickedYear] = useState(null)
@@ -60,7 +63,7 @@ export default function App() {
   if (data.status === 'loading') {
     return (
       <div className="grid min-h-full place-items-center bg-ink-50/40">
-        <p className="animate-fade text-sm font-medium text-ink-500">Se încarcă datele…</p>
+        <Loading text="Se încarcă datele…" />
       </div>
     )
   }
@@ -72,28 +75,31 @@ export default function App() {
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar
           view={view}
-          onView={setView}
           year={year}
           years={years}
           onYear={setPickedYear}
           active={activeIds}
           onToggleNetwork={toggleNetwork}
           onAddData={() => setEntryOpen(true)}
+          onOpenNav={() => setNavOpen(true)}
         />
 
-        <main className="flex-1 px-5 py-6 sm:px-8">
+        <main className="flex-1 px-4 py-5 sm:px-8 sm:py-6">
           {/* La key fuerza el remontaje: cada cambio de vista o de año reanima. */}
           <div key={`${view}-${year}`} className="mx-auto max-w-[1400px]">
-            <View year={year} networks={networks} activeIds={activeIds} />
+            <Suspense fallback={<Loading />}>
+              <View year={year} networks={networks} activeIds={activeIds} />
+            </Suspense>
           </div>
         </main>
 
         {/* El hueco extra deja sitio al aviso fijo de versión de prueba. */}
-        <footer className="px-5 pb-40 pt-2 text-xs text-ink-400 sm:px-8 sm:pb-8">
+        <footer className="px-4 pb-36 pt-2 text-xs text-ink-400 sm:px-8 sm:pb-8">
           FrescoVerde · Panou rețele sociale
         </footer>
       </div>
 
+      <MobileNav open={navOpen} onClose={() => setNavOpen(false)} view={view} onChange={setView} />
       <DataEntryDrawer open={entryOpen} onClose={() => setEntryOpen(false)} defaultYear={year} />
       <DemoNotice />
     </div>

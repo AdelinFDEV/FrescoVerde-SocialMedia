@@ -46,3 +46,19 @@ export const activeDot = (color) => ({
   stroke: SURFACE,
   strokeWidth: 2,
 })
+
+/**
+ * Ejes adaptados al ancho de pantalla.
+ *
+ * En el móvil el eje vertical se come un tercio del gráfico si mantiene el
+ * ancho de escritorio, y las etiquetas de los doce meses se pisan unas a
+ * otras, así que se estrecha el eje y se muestra un mes de cada dos.
+ */
+export function useResponsiveAxes(isMobile) {
+  const tick = { fontSize: isMobile ? 11 : 12, fill: AXIS_TEXT }
+  return {
+    x: { ...axisProps, tick, dy: isMobile ? 6 : 8, interval: isMobile ? 1 : 0 },
+    y: { ...yAxisProps, tick, width: isMobile ? 56 : 64 },
+    margin: { top: 8, right: isMobile ? 6 : 16, bottom: 0, left: 0 },
+  }
+}

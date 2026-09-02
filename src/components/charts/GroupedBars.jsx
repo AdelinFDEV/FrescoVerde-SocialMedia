@@ -9,16 +9,18 @@ import {
   YAxis,
 } from 'recharts'
 import ChartTooltip from './ChartTooltip'
-import { ANIM, BAR, axisProps, cursorFill, gridProps, stagger, yAxisProps } from './chartTheme'
+import useIsMobile from '../ui/useIsMobile'
+import { ANIM, BAR, cursorFill, gridProps, stagger, useResponsiveAxes } from './chartTheme'
 
 /** Columnas agrupadas para comparar periodos (trimestres, años). */
 export default function GroupedBars({ data, series, format, tickFormat, xKey = 'label', labelLast = false }) {
+  const axes = useResponsiveAxes(useIsMobile())
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} margin={{ top: 24, right: 16, bottom: 0, left: 0 }} barGap={6} barCategoryGap="26%">
+      <BarChart data={data} margin={{ ...axes.margin, top: 24 }} barGap={6} barCategoryGap="26%">
         <CartesianGrid {...gridProps} />
-        <XAxis dataKey={xKey} {...axisProps} />
-        <YAxis {...yAxisProps} tickFormatter={tickFormat ?? format} />
+        <XAxis dataKey={xKey} {...axes.x} />
+        <YAxis {...axes.y} tickFormatter={tickFormat ?? format} />
         <Tooltip
           cursor={cursorFill}
           content={<ChartTooltip format={format} total={false} />}
