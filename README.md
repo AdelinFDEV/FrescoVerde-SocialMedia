@@ -306,6 +306,37 @@ la base de datos por su cuenta.
 Lo que sí se evita es que ese acceso destruya nada: `anon` puede leer, insertar
 y actualizar, pero no borrar. Ver «Los datos no se pierden nunca».
 
+## Contraseña de acceso
+
+El panel vive en una URL pública de Vercel, así que hay una pantalla de
+contraseña delante. **Sé qué es y qué no es:** frena a quien llegue de
+casualidad al enlace, y nada más. El código de la página es público, así que
+quien abra las herramientas del navegador se la salta; y **los datos no quedan
+protegidos por ella** — la clave de Supabase viaja en la página y las políticas
+permiten leer sin sesión iniciada. Es una cortina, no una puerta.
+
+Lo único que protege de verdad los datos sería Supabase Auth con cuentas, o el
+Deployment Protection de Vercel (plan de pago).
+
+Lo que sí se ha cuidado: **en la web no viaja la contraseña**, sino su huella
+SHA-256 con sal. Importa porque la gente reutiliza contraseñas.
+
+Para ponerla:
+
+```bash
+npm run hash-password
+```
+
+La contraseña se escribe en el terminal y no sale de esa máquina. El comando
+imprime la huella, que va en Vercel como `VITE_ACCESS_PASSWORD_HASH`. Después
+hay que **volver a desplegar**: Vite mete las variables al construir, así que un
+despliegue que ya existe no las coge.
+
+Sin esa variable no se pide contraseña, que es lo cómodo en local.
+
+El panel además lleva `robots.txt` y `<meta name="robots" content="noindex">`
+para no aparecer en buscadores.
+
 ## Estructura
 
 ```
@@ -332,6 +363,7 @@ src/
 scripts/
   check-data.mjs    13 verificaciones de coherencia de los cálculos
   check-math.mjs    recálculo independiente de cada indicador
+  hash-password.mjs genera la huella de la contraseña de acceso
 supabase/
   migrations/       el esquema de la base de datos
 ```

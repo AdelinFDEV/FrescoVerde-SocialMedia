@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "check:data": "node --import ./scripts/register.mjs scripts/check-data.mjs",
     "check:math": "node --import ./scripts/register.mjs scripts/check-math.mjs",
-    "check": "npm run check:data && npm run check:math"
+    "check": "npm run check:data && npm run check:math",
+    "hash-password": "node scripts/hash-password.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.113.0",
