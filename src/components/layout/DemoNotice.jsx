@@ -12,7 +12,7 @@ import useDataset from '../../data/useDataset'
  * y queda por debajo de los formularios modales (z-40 frente a z-50).
  */
 export default function DemoNotice() {
-  const { source, error, incomplete, connected } = useDataset()
+  const { source, error, incomplete, inconsistent, connected } = useDataset()
 
   const variant = error
     ? {
@@ -65,6 +65,16 @@ export default function DemoNotice() {
               {incomplete.length === 1
                 ? '1 lună are date doar pentru o rețea și nu se afișează.'
                 : `${incomplete.length} luni au date doar pentru o rețea și nu se afișează.`}
+            </p>
+          ) : null}
+
+          {/* Si la comunidad no encaja de un mes al siguiente, los porcentajes
+              de crecimiento saldrían mal en silencio. Mejor decirlo. */}
+          {!error && inconsistent.length ? (
+            <p className="mt-1.5 text-xs leading-relaxed text-[#ffd9a0]">
+              {inconsistent.length === 1
+                ? `Cifrele din ${inconsistent[0].longLabel} (${inconsistent[0].network}) nu se leagă de luna precedentă.`
+                : `${inconsistent.length} luni nu se leagă de luna precedentă. Verifică urmăritorii totali.`}
             </p>
           ) : null}
 

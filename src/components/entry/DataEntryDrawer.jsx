@@ -1,26 +1,33 @@
-import { useMemo, useState } from 'react'
-import { Database, Info } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Check, Database, Info, Loader2, TriangleAlert } from 'lucide-react'
 import { NETWORKS, NETWORK_BY_ID } from '../../data/networks'
 import { DERIVED_NOTE, ENTRY_FIELDS, METRICS } from '../../data/metrics'
 import { MONTH_LABELS_LONG } from '../../data/calendar'
+import { refreshDataset } from '../../data/dataset'
 import useDataset from '../../data/useDataset'
+import { STAT_FIELDS, explainError, statsRow } from '../../data/toDatabase'
+import { isSupabaseConfigured, supabase } from '../../lib/supabase'
 import Drawer from '../ui/Drawer'
 import SegmentedControl from '../ui/SegmentedControl'
 
 /**
- * Formulario de introducción manual de las estadísticas de un mes.
+ * Estadísticas mensuales de una red, copiadas de la app.
  *
- * Todavía no guarda nada: la validación y el resumen funcionan, pero el envío
- * queda desactivado hasta que se conecte Supabase. El objetivo es que el
- * formulario ya tenga exactamente los campos que la tabla necesitará.
+ * Guarda con `upsert`: si el mes ya existe lo actualiza en vez de fallar, así
+ * que corregir una cifra es volver a abrir el mismo mes. Por eso también se
+ * precarga lo ya guardado — enviar el formulario a medias sobrescribiría el
+ * mes con huecos.
  */
 export default function DataEntryDrawer({ open, onClose, defaultYear }) {
   const [network, setNetwork] = useState('instagram')
   const [year, setYear] = useState(defaultYear)
   const [month, setMonth] = useState(new Date().getMonth())
   const [values, setValues] = useState({})
+  const [save, setSave] = useState({ status: 'idle', message: null })
+  // Guarda el periodo del que se cargó la fila, no un booleano: así un dato
+  // de un mes anterior nunca se toma por el del mes que se está mirando.
+  const [loadedPeriod, setLoadedPeriod] = useState(null)
 
-  // Los años disponibles salen de los datos cargados, no de una constante.
   const { months: loadedMonths } = useDataset()
   const years = [...new Set(loadedMonths.map((m) => m.year))]
 
@@ -28,7 +35,10 @@ export default function DataEntryDrawer({ open, onClose, defaultYear }) {
   const keyOf = (id) => `${network}-${year}-${month}-${id}`
 
   const get = (id) => values[keyOf(id)] ?? ''
-  const set = (id, v) => setValues((prev) => ({ ...prev, [keyOf(id)]: v }))
+  const set = (id, v) => {
+    setValues((prev) => ({ ...prev, [keyOf(id)]: v }))
+    setSave({ status: 'idle', message: null })
+  }
 
   const num = (id) => {
     const raw = String(get(id)).replace(',', '.').trim()
@@ -36,6 +46,40 @@ export default function DataEntryDrawer({ open, onClose, defaultYear }) {
     const n = Number(raw)
     return Number.isFinite(n) ? n : null
   }
+
+  // Si el mes ya está guardado se trae, para no sobrescribirlo con huecos.
+  useEffect(() => {
+    if (!open || !isSupabaseConfigured) return
+    let cancelled = false
+    const period = `${network}-${year}-${month}`
+
+    supabase
+      .from('monthly_stats')
+      .select('*')
+      .eq('network', network)
+      .eq('year', year)
+      .eq('month', month + 1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return
+        if (!data) return
+        setLoadedPeriod(period)
+        setValues((prev) => {
+          const next = { ...prev }
+          Object.entries(data).forEach(([column, value]) => {
+            const field = STAT_FIELDS[column]
+            const key = `${period}-${field}`
+            // Lo que ya se estuviera escribiendo manda sobre lo guardado.
+            if (field && value != null && next[key] === undefined) next[key] = String(value)
+          })
+          return next
+        })
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [open, network, year, month])
 
   // Avisos de coherencia: los mismos que aplica el panel al calcular.
   const warnings = useMemo(() => {
@@ -70,7 +114,28 @@ export default function DataEntryDrawer({ open, onClose, defaultYear }) {
     return w
   }, [values, network, year, month]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const filled = fields.filter((f) => num(f.id) != null).length
+  const existing = loadedPeriod === `${network}-${year}-${month}`
+  const missing = fields.filter((f) => num(f.id) == null)
+  const filled = fields.length - missing.length
+  const canSave = isSupabaseConfigured && !missing.length && !warnings.length && save.status !== 'saving'
+
+  async function handleSave() {
+    setSave({ status: 'saving', message: null })
+
+    const { error } = await supabase
+      .from('monthly_stats')
+      .upsert(statsRow({ network, year, month, fields, valueOf: num }), {
+        onConflict: 'network,year,month',
+      })
+
+    if (error) {
+      setSave({ status: 'error', message: explainError(error) })
+      return
+    }
+
+    await refreshDataset()
+    onClose()
+  }
 
   return (
     <Drawer
@@ -118,14 +183,26 @@ export default function DataEntryDrawer({ open, onClose, defaultYear }) {
       }
       footer={
         <>
-          <div className="mb-3 flex items-start gap-2.5 rounded-xl border border-dashed border-ink-200 px-3.5 py-3">
-            <Database size={16} strokeWidth={2.2} className="mt-0.5 shrink-0 text-ink-400" />
-            <p className="text-sm leading-relaxed text-ink-500">
-              Salvarea este dezactivată până la conectarea bazei de date Supabase. Până atunci panoul
-              folosește datele demonstrative.
-            </p>
-          </div>
-          <div className="flex justify-end gap-2">
+          {!isSupabaseConfigured ? (
+            <div className="mb-3 flex items-start gap-2.5 rounded-xl border border-dashed border-ink-200 px-3.5 py-3">
+              <Database size={16} strokeWidth={2.2} className="mt-0.5 shrink-0 text-ink-400" />
+              <p className="text-sm leading-relaxed text-ink-500">
+                Baza de date nu este configurată, așa că salvarea este dezactivată.
+              </p>
+            </div>
+          ) : null}
+
+          {save.status === 'error' ? (
+            <div className="mb-3 flex items-start gap-2.5 rounded-xl border border-[#e2d5f5] bg-[#f7f3fd] px-3.5 py-3">
+              <TriangleAlert size={16} strokeWidth={2.2} className="mt-0.5 shrink-0 text-[#5b3a9e]" />
+              <p className="text-sm leading-relaxed text-[#5b3a9e]">{save.message}</p>
+            </div>
+          ) : null}
+
+          <div className="flex items-center justify-end gap-2">
+            {isSupabaseConfigured && missing.length ? (
+              <span className="mr-auto text-sm text-ink-400">Mai lipsesc {missing.length} câmpuri</span>
+            ) : null}
             <button
               onClick={onClose}
               className="rounded-xl border border-ink-200 px-4 py-2 text-sm font-medium text-ink-600 transition-colors hover:bg-ink-50"
@@ -133,11 +210,24 @@ export default function DataEntryDrawer({ open, onClose, defaultYear }) {
               Anulează
             </button>
             <button
-              disabled
-              title="Se activează după conectarea Supabase"
-              className="cursor-not-allowed rounded-xl bg-ink-200 px-4 py-2 text-sm font-semibold text-ink-500"
+              onClick={handleSave}
+              disabled={!canSave}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+                canSave
+                  ? 'bg-ink-600 text-white hover:bg-ink-700'
+                  : 'cursor-not-allowed bg-ink-200 text-ink-500'
+              }`}
             >
-              Salvează luna
+              {save.status === 'saving' ? (
+                <Loader2 size={15} strokeWidth={2.6} className="animate-spin" />
+              ) : (
+                <Check size={15} strokeWidth={2.6} />
+              )}
+              {save.status === 'saving'
+                ? 'Se salvează…'
+                : existing
+                  ? 'Actualizează luna'
+                  : 'Salvează luna'}
             </button>
           </div>
         </>
@@ -146,11 +236,20 @@ export default function DataEntryDrawer({ open, onClose, defaultYear }) {
       <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-ink-100 bg-ink-50 px-3.5 py-3">
         <Info size={16} strokeWidth={2.2} className="mt-0.5 shrink-0 text-ink-500" />
         <p className="text-sm leading-relaxed text-ink-600">
-          Panoul calculează singur{' '}
-          <strong className="font-semibold text-ink-800">
-            {DERIVED_NOTE[network].map((id) => METRICS[id].label.toLowerCase()).join(', ')}
-          </strong>
-          , așa că nu apar mai jos. Procentele se transformă automat în număr de vizualizări.
+          {existing ? (
+            <>
+              Luna aceasta <strong className="font-semibold text-ink-800">este deja salvată</strong>:
+              cifrele de mai jos sunt cele înregistrate și se pot corecta.
+            </>
+          ) : (
+            <>
+              Panoul calculează singur{' '}
+              <strong className="font-semibold text-ink-800">
+                {DERIVED_NOTE[network].map((id) => METRICS[id].label.toLowerCase()).join(', ')}
+              </strong>
+              , așa că nu apar mai jos.
+            </>
+          )}
         </p>
       </div>
 

@@ -20,6 +20,7 @@ const DEMO = {
   source: 'demo',
   status: 'ready',
   incomplete: [],
+  inconsistent: [],
   error: null,
   connected: false,
 }
@@ -53,12 +54,22 @@ export const currentYear = () => {
 
 let started = false
 
+/** Vuelve a leer la base de datos, por ejemplo después de guardar. */
+export const refreshDataset = () => fetchDataset({ showLoading: false })
+
 /** Carga los datos reales una sola vez. Sin configuración, no hace nada. */
 export async function loadDataset() {
   if (started || !isSupabaseConfigured) return
   started = true
+  return fetchDataset({ showLoading: true })
+}
 
-  publish({ ...current, status: 'loading' })
+// Al recargar tras guardar no se muestra la pantalla de carga: taparía el
+// panel entero por una consulta de medio segundo.
+async function fetchDataset({ showLoading }) {
+  if (!isSupabaseConfigured) return
+
+  if (showLoading) publish({ ...current, status: 'loading' })
 
   try {
     const [stats, camps] = await Promise.all([
@@ -69,12 +80,12 @@ export async function loadDataset() {
     if (stats.error) throw stats.error
     if (camps.error) throw camps.error
 
-    const { months: loaded, incomplete } = monthsFromDatabase(stats.data ?? [])
+    const { months: loaded, incomplete, inconsistent } = monthsFromDatabase(stats.data ?? [])
 
     // Una base de datos vacía no es un error: aún no se ha metido nada. Se
     // sigue enseñando la demostración hasta que haya un mes completo.
     if (!loaded.length) {
-      publish({ ...DEMO, status: 'ready', source: 'demo', incomplete, connected: true })
+      publish({ ...DEMO, status: 'ready', source: 'demo', incomplete, inconsistent, connected: true })
       return
     }
 
@@ -84,6 +95,7 @@ export async function loadDataset() {
       source: 'supabase',
       status: 'ready',
       incomplete,
+      inconsistent,
       error: null,
       connected: true,
     })

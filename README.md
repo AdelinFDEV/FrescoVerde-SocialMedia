@@ -10,7 +10,7 @@ README están en español.
 npm run dev        # desarrollo
 npm run build      # producción
 npm run lint       # oxlint
-npm run check:data # verifica la coherencia de todos los cálculos
+npm run check      # verifica la coherencia y recalcula cada indicador aparte
 ```
 
 ## Secciones
@@ -58,27 +58,94 @@ porcentaje se recalcula sobre el total del periodo. Promediar los porcentajes de
 meses distintos daría cifras falsas. El formulario acepta el porcentaje tal como
 lo da la app y lo convierte a recuento.
 
-## Cómo se calcula el dinero
+## Los datos no se pierden nunca
 
-Las campañas son el origen del gasto: **la inversión mensual de una red es
-exactamente la suma de sus campañas**, así que ningún coste puede descuadrar con
-el detalle.
+Hay dos formas de perder un dato: borrar la fila, o pisarla con una corrección.
+Las dos están cerradas.
 
-| Indicador | Fórmula | Qué significa |
+**No se puede borrar.** El permiso de borrado está retirado a nivel de tabla, no
+solo de política. Aunque mañana alguien creara una política de `delete` por
+error, Postgres seguiría denegándolo. Borrar solo es posible desde el panel de
+Supabase, donde hace falta iniciar sesión de verdad — tiene que existir una
+forma de arreglar un desastre, pero no desde la web.
+
+**Corregir no destruye.** Cada modificación guarda la fila anterior completa, en
+JSON, en `monthly_stats_history` o `campaigns_history`, con su fecha. Si alguien
+corrige una cifra, la anterior sigue ahí. Esas tablas son de solo lectura para
+la aplicación: las escribe un disparador, y nadie puede modificarlas ni
+vaciarlas.
+
+Para ver el histórico de un mes, en el SQL Editor:
+
+```sql
+select changed_at, operation, previous
+from monthly_stats_history
+where stats_id = (
+  select id from monthly_stats
+  where network = 'instagram' and year = 2026 and month = 8
+)
+order by changed_at desc;
+```
+
+## Cómo se calcula cada estadística
+
+**La regla que gobierna todo:** los ratios se calculan **sobre totales ya
+sumados**, nunca promediando los ratios de cada mes. La media de los CPM
+mensuales no es el CPM del año — pesa igual un mes de 500 € que uno de 5.000 €.
+
+| Indicador | Fórmula | Detalle |
 |---|---|---|
-| **Cost pe urmăritor plătit** | `investiție ÷ urmăritori din campanii` | El CPA real de la publicidad |
-| **Cost pe urmăritor net** | `investiție ÷ creștere netă` | Lo que cuesta cada seguidor que de verdad se queda |
-| **CPM** | `investiție ÷ afișări × 1000` | Coste por mil impresiones (impresiones, no alcance) |
-| **CPC** | `investiție ÷ clicuri` | |
-| **CTR** | `clicuri ÷ afișări` | |
-| **Rată de interacțiune** | `interacțiuni ÷ vizualizări` | |
-| **Rată de creștere** | `creștere netă ÷ comunitate la inicio del periodo` | |
+| **Comunitate** | último mes del periodo | Es un saldo: no se suma entre meses |
+| **Creștere netă** | Σ `net_growth` | Instagram lo deduce de altas − bajas; TikTok lo publica |
+| **Rată de creștere** | Σ `net_growth` ÷ comunidad al **inicio** del periodo | No al final: si no, un crecimiento del 100 % saldría como 50 % |
+| **Rată de interacțiune** | Σ `interactions` ÷ Σ `views` | |
+| **Interacțiuni** | aprecieri + comentarii + distribuiri + salvări | Instagram da las piezas; TikTok, los totales |
+| **Rată vizite profil** | Σ `profile_visits` ÷ Σ `views` | |
+| **Conversie în urmăritor** | Σ `net_growth` ÷ Σ `profile_visits` | |
+| **Investiție** | Σ del gasto de las campañas del mes | Nunca un dato aparte |
+| **Cost pe urmăritor plătit** | Σ `spend` ÷ Σ `followers_gained` | El CPA real de la publicidad |
+| **Cost pe urmăritor net** | Σ `spend` ÷ Σ `net_growth` | `null` si el neto es cero o negativo |
+| **CPM** | Σ `spend` × 1000 ÷ Σ `impressions` | Impresiones, no alcance |
+| **CPC** | Σ `spend` ÷ Σ `clicks` | |
+| **CTR** | Σ `clicks` ÷ Σ `impressions` | |
 
-Todos los ratios se calculan **sobre totales ya sumados**, nunca promediando los
-ratios mensuales. `npm run check:data` comprueba exactamente eso, entre otras 12
-verificaciones (cuadre de campañas, continuidad de la comunidad entre meses,
-que un saldo no se sume, que una métrica de una sola red no se agregue como si
-fuera de las dos…).
+Toda división comprueba que el denominador sea mayor que cero; si no, devuelve
+`null` y la interfaz muestra `—`. Nunca sale un `Infinity` ni un `NaN`
+disfrazado de cifra.
+
+### Cómo está verificado
+
+`npm run check` corre dos comprobaciones distintas:
+
+**`check:data`** — 13 verificaciones estructurales: que cada red publique
+exactamente los campos de su catálogo, que el gasto de un mes sea la suma de sus
+campañas, que la comunidad sea continua entre meses, que un saldo no se sume,
+que una métrica de una sola red no se agregue como si fuera de las dos, y que el
+traductor de Supabase no pierda ningún campo por un nombre mal escrito.
+
+**`check:math`** — un **recálculo independiente**. Parte de los datos crudos y
+calcula cada indicador a mano, sin usar ninguna función del panel, y compara las
+dos vías en los tres años. Si una fórmula estuviera mal, las cifras no
+coincidirían. Comprueba además la identidad que lo ata todo:
+
+```
+comunidad al final = comunidad al inicio + Σ crecimiento neto
+```
+
+y que los trimestres y el año den exactamente lo mismo que la suma de los meses.
+
+### Lo que el panel vigila con datos reales
+
+Los datos de demostración son perfectos por construcción; los reales no. Dos
+avisos aparecen en la esquina cuando algo no encaja:
+
+- **Un mes con datos de una sola red no se muestra.** Rellenar la que falta con
+  ceros inventaría cifras y daría saltos falsos en los gráficos.
+- **La comunidad tiene que encajar de un mes al siguiente**: los seguidores de
+  un mes deben ser los del anterior más lo que creció. Si no cuadra, hay un mes
+  sin registrar en medio o una cifra mal tecleada, y los porcentajes de
+  crecimiento saldrían mal en silencio. El aviso dice qué mes y qué red.
+
 
 ## Comparativas honestas
 
@@ -128,9 +195,14 @@ pintan un componente (red, estado) exportan su texto. Ver
 
 ## Entrada de datos
 
-Dos formularios, ambos con **el guardado desactivado a propósito** hasta que se
-conecte Supabase. La validación y los cálculos derivados ya funcionan, así que el
-esquema que necesitarán las tablas queda definido.
+Dos formularios que **guardan en Supabase**. El mensual usa `upsert`: si el mes
+ya existe lo actualiza en vez de fallar, y precarga lo guardado para que enviar
+el formulario a medias no lo sobrescriba con huecos. El de campañas inserta o
+actualiza según se venga de «Campanie nouă» o del lápiz de una fila.
+
+Ninguno de los dos borra nunca. Los errores de la base de datos se traducen a
+rumano llano: en vez del texto de Postgres, «Postări + Reels + Stories trebuie
+să dea 100 %».
 
 **«Adaugă date»** (barra superior) — estadísticas mensuales de una red, con
 exactamente los campos que reporta cada app en su orden, y avisos de coherencia
@@ -199,14 +271,16 @@ meses pasan de 1-12 a 0-11, y **un mes al que le falte una red no se muestra**
 — rellenarla con ceros inventaría cifras y daría saltos falsos en los gráficos.
 Esos meses se cuentan en el aviso.
 
-### Guardar desde el panel
+### Acceso sin login
 
-Los dos formularios siguen con el botón desactivado. Ahora que las tablas
-existen, activarlos es escribir el `insert`/`update` correspondiente en
-[`DataEntryDrawer.jsx`](src/components/entry/DataEntryDrawer.jsx) y
-[`CampaignDrawer.jsx`](src/components/entry/CampaignDrawer.jsx). Antes hay que
-decidir cómo entra la gente: las políticas de seguridad solo dejan escribir a
-usuarios con sesión iniciada, y el panel todavía no tiene login.
+El panel lo usan tres personas por un enlace privado y se decidió no poner
+login, así que el acceso va con la clave pública. Conviene tenerlo claro: esa
+clave viaja dentro del JavaScript de la página, así que **un enlace privado no
+es una barrera de seguridad** — quien llegue a la web puede leerla y consultar
+la base de datos por su cuenta.
+
+Lo que sí se evita es que ese acceso destruya nada: `anon` puede leer, insertar
+y actualizar, pero no borrar. Ver «Los datos no se pierden nunca».
 
 ## Estructura
 
@@ -233,6 +307,7 @@ src/
   views/            una por sección
 scripts/
   check-data.mjs    13 verificaciones de coherencia de los cálculos
+  check-math.mjs    recálculo independiente de cada indicador
 supabase/
   migrations/       el esquema de la base de datos
 ```

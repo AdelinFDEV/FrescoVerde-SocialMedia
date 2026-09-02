@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react'
-import { Database } from 'lucide-react'
+import { Check, Database, Loader2, TriangleAlert } from 'lucide-react'
 import { NETWORKS, NETWORK_BY_ID } from '../../data/networks'
 import { OBJECTIVES, RESULT_FIELDS, STATUSES, STATUS_BY_ID } from '../../data/campaigns'
 import { MONTH_LABELS_LONG } from '../../data/calendar'
 import useDataset from '../../data/useDataset'
 import { fmtDec2, fmtEur2, fmtPct } from '../../data/selectors'
+import { refreshDataset } from '../../data/dataset'
+import { campaignRow, explainError } from '../../data/toDatabase'
+import { isSupabaseConfigured, supabase } from '../../lib/supabase'
 import Drawer from '../ui/Drawer'
 import SegmentedControl from '../ui/SegmentedControl'
 
@@ -52,19 +55,25 @@ const inputClass =
 /**
  * Alta y edición de una campaña: ficha, resultados y estado.
  *
- * Todavía no guarda nada — el envío queda desactivado hasta que se conecte
- * Supabase — pero la validación y los indicadores derivados ya funcionan, así
- * que se ve al momento qué CTR o qué coste por seguidor sale de las cifras.
+ * Los indicadores derivados se recalculan mientras se teclea, así que se ve al
+ * momento qué CTR o qué coste por seguidor sale de las cifras introducidas.
+ *
+ * Guardar inserta o actualiza según se venga de «Campanie nouă» o del lápiz de
+ * una fila. Nunca borra: el histórico no se toca.
  */
 export default function CampaignDrawer({ open, onClose, campaign, defaultYear }) {
   const isEdit = !!campaign
   const [form, setForm] = useState(() => initialForm(campaign, defaultYear))
+  const [save, setSave] = useState({ status: 'idle', message: null })
 
   // Los años disponibles salen de los datos cargados, no de una constante.
   const { months: loadedMonths } = useDataset()
   const years = [...new Set(loadedMonths.map((m) => m.year))]
 
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+  const set = (k, v) => {
+    setForm((f) => ({ ...f, [k]: v }))
+    setSave({ status: 'idle', message: null })
+  }
 
   const num = (k) => {
     const raw = String(form[k] ?? '').replace(',', '.').trim()
@@ -111,6 +120,36 @@ export default function CampaignDrawer({ open, onClose, campaign, defaultYear })
   }, [form]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const net = NETWORK_BY_ID[form.networkId]
+  const canSave = isSupabaseConfigured && !warnings.length && save.status !== 'saving'
+
+  async function handleSave() {
+    setSave({ status: 'saving', message: null })
+
+    // Los campos vacíos valen 0: una campaña recién creada aún no tiene
+    // resultados, y la tabla los guarda como cero, no como nulos.
+    const row = campaignRow({
+      ...form,
+      spend: num('spend') ?? 0,
+      impressions: num('impressions') ?? 0,
+      reach: num('reach') ?? 0,
+      clicks: num('clicks') ?? 0,
+      followersGained: num('followersGained') ?? 0,
+    })
+
+    const query = isEdit
+      ? supabase.from('campaigns').update(row).eq('id', campaign.dbId)
+      : supabase.from('campaigns').insert(row)
+
+    const { error } = await query
+
+    if (error) {
+      setSave({ status: 'error', message: explainError(error) })
+      return
+    }
+
+    await refreshDataset()
+    onClose()
+  }
 
   return (
     <Drawer
@@ -127,11 +166,20 @@ export default function CampaignDrawer({ open, onClose, campaign, defaultYear })
           <div className="mb-3 flex items-start gap-2.5 rounded-xl border border-dashed border-ink-200 px-3.5 py-3">
             <Database size={16} strokeWidth={2.2} className="mt-0.5 shrink-0 text-ink-400" />
             <p className="text-sm leading-relaxed text-ink-500">
-              Salvarea este dezactivată până la conectarea bazei de date Supabase. Investiția lunară a
-              rețelei <strong className="font-semibold text-ink-700">{net.name}</strong> se va recalcula
-              automat din campanii.
+              {isSupabaseConfigured
+                ? 'Investiția lunară a rețelei '
+                : 'Baza de date nu este configurată, așa că salvarea este dezactivată. Investiția lunară a rețelei '}
+              <strong className="font-semibold text-ink-700">{net.name}</strong> se recalculează automat
+              din campanii.
             </p>
           </div>
+
+          {save.status === 'error' ? (
+            <div className="mb-3 flex items-start gap-2.5 rounded-xl border border-[#e2d5f5] bg-[#f7f3fd] px-3.5 py-3">
+              <TriangleAlert size={16} strokeWidth={2.2} className="mt-0.5 shrink-0 text-[#5b3a9e]" />
+              <p className="text-sm leading-relaxed text-[#5b3a9e]">{save.message}</p>
+            </div>
+          ) : null}
           <div className="flex justify-end gap-2">
             <button
               onClick={onClose}
@@ -140,11 +188,24 @@ export default function CampaignDrawer({ open, onClose, campaign, defaultYear })
               Anulează
             </button>
             <button
-              disabled
-              title="Se activează după conectarea Supabase"
-              className="cursor-not-allowed rounded-xl bg-ink-200 px-4 py-2 text-sm font-semibold text-ink-500"
+              onClick={handleSave}
+              disabled={!canSave}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+                canSave
+                  ? 'bg-ink-600 text-white hover:bg-ink-700'
+                  : 'cursor-not-allowed bg-ink-200 text-ink-500'
+              }`}
             >
-              {isEdit ? 'Salvează modificările' : 'Creează campania'}
+              {save.status === 'saving' ? (
+                <Loader2 size={15} strokeWidth={2.6} className="animate-spin" />
+              ) : (
+                <Check size={15} strokeWidth={2.6} />
+              )}
+              {save.status === 'saving'
+                ? 'Se salvează…'
+                : isEdit
+                  ? 'Salvează modificările'
+                  : 'Creează campania'}
             </button>
           </div>
         </>

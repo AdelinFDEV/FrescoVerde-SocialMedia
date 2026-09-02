@@ -97,7 +97,49 @@ export function monthsFromDatabase(rows) {
       })
     })
 
-  return { months, incomplete }
+  return { months, incomplete, inconsistent: findInconsistencies(months) }
+}
+
+/**
+ * Comprueba que la comunidad encaja de un mes al siguiente.
+ *
+ * Los seguidores totales y el crecimiento neto se introducen por separado, así
+ * que tienen que cuadrar entre sí: los de un mes deben ser los del anterior más
+ * lo que creció. Si no cuadran hay un mes sin registrar en medio o una cifra
+ * mal tecleada, y los porcentajes de crecimiento saldrían mal sin avisar.
+ */
+function findInconsistencies(months) {
+  const problems = []
+
+  NETWORKS.forEach((net) => {
+    months.forEach((month, i) => {
+      if (i === 0) return
+      const previous = months[i - 1]
+
+      // Un salto en el calendario ya explica por sí solo el descuadre.
+      const monthsApart =
+        (month.year - previous.year) * 12 + (month.month - previous.month)
+      if (monthsApart !== 1) {
+        problems.push({ ...monthMeta(month.year, month.month), network: net.name, reason: 'gap' })
+        return
+      }
+
+      const before = previous.networks[net.id].followers
+      const now = month.networks[net.id].followers
+      const growth = month.networks[net.id].netGrowth
+      if (before + growth !== now) {
+        problems.push({
+          ...monthMeta(month.year, month.month),
+          network: net.name,
+          reason: 'mismatch',
+          expected: before + growth,
+          found: now,
+        })
+      }
+    })
+  })
+
+  return problems
 }
 
 /** El panel muestra un código legible; en la base de datos la clave es el id. */
