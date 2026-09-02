@@ -10,6 +10,40 @@ import { isSupabaseConfigured, supabase } from '../../lib/supabase'
 import Drawer from '../ui/Drawer'
 import SegmentedControl from '../ui/SegmentedControl'
 
+const DRAFT_KEY = 'frescoverde:borrador-lunar'
+
+/**
+ * El borrador vive en el navegador hasta que se guarda.
+ *
+ * Copiar dieciocho cifras a mano lleva su rato; que una recarga, un tropiezo
+ * del servidor o cerrar el panel sin querer se las lleve por delante sería
+ * inaceptable. `localStorage` puede fallar (modo privado, permisos), así que
+ * todo va envuelto: si falla, simplemente no hay borrador.
+ */
+function readDraft() {
+  try {
+    return JSON.parse(localStorage.getItem(DRAFT_KEY) ?? '{}')
+  } catch {
+    return {}
+  }
+}
+
+function writeDraft(values) {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(values))
+  } catch {
+    // Sin almacenamiento el formulario sigue funcionando; solo no recuerda.
+  }
+}
+
+function clearDraft() {
+  try {
+    localStorage.removeItem(DRAFT_KEY)
+  } catch {
+    // Nada que hacer.
+  }
+}
+
 /**
  * Estadísticas mensuales de una red, copiadas de la app.
  *
@@ -22,7 +56,9 @@ export default function DataEntryDrawer({ open, onClose, defaultYear }) {
   const [network, setNetwork] = useState('instagram')
   const [year, setYear] = useState(defaultYear)
   const [month, setMonth] = useState(new Date().getMonth())
-  const [values, setValues] = useState({})
+  // El borrador se guarda en el navegador. Son dieciocho campos copiados a
+  // mano: una recarga a medias no puede llevárselos por delante.
+  const [values, setValues] = useState(readDraft)
   const [save, setSave] = useState({ status: 'idle', message: null })
   // Guarda el periodo del que se cargó la fila, no un booleano: así un dato
   // de un mes anterior nunca se toma por el del mes que se está mirando.
@@ -36,7 +72,11 @@ export default function DataEntryDrawer({ open, onClose, defaultYear }) {
 
   const get = (id) => values[keyOf(id)] ?? ''
   const set = (id, v) => {
-    setValues((prev) => ({ ...prev, [keyOf(id)]: v }))
+    setValues((prev) => {
+      const next = { ...prev, [keyOf(id)]: v }
+      writeDraft(next)
+      return next
+    })
     setSave({ status: 'idle', message: null })
   }
 
@@ -133,6 +173,9 @@ export default function DataEntryDrawer({ open, onClose, defaultYear }) {
       return
     }
 
+    // Guardado ya: el borrador deja de tener sentido.
+    clearDraft()
+    setValues({})
     await refreshDataset()
     onClose()
   }
@@ -187,7 +230,9 @@ export default function DataEntryDrawer({ open, onClose, defaultYear }) {
             <div className="mb-3 flex items-start gap-2.5 rounded-xl border border-dashed border-ink-200 px-3.5 py-3">
               <Database size={16} strokeWidth={2.2} className="mt-0.5 shrink-0 text-ink-400" />
               <p className="text-sm leading-relaxed text-ink-500">
-                Baza de date nu este configurată, așa că salvarea este dezactivată.
+                Salvarea este dezactivată: pagina nu vede baza de date. Reîncarcă pagina
+                (Ctrl+Shift+R). Dacă tot nu merge, repornește serverul — cifrele scrise
+                rămân salvate în browser.
               </p>
             </div>
           ) : null}

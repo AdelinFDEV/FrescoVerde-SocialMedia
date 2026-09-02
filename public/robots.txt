@@ -1,0 +1,3 @@
+# Panel interno de FrescoVerde: no debe aparecer en buscadores.
+User-agent: *
+Disallow: /
