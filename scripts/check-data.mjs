@@ -1,5 +1,6 @@
-import { CAMPAIGNS, MONTHLY } from '../src/data/socialData.js'
+import { DEMO_CAMPAIGNS as CAMPAIGNS, DEMO_MONTHLY as MONTHLY } from '../src/data/demoData.js'
 import { METRICS, METRIC_IDS, reports } from '../src/data/metrics.js'
+import { monthsFromDatabase } from '../src/data/fromDatabase.js'
 import {
   aggregate,
   annualRows,
@@ -149,3 +150,80 @@ console.log('„Pentru tine" / căutare',
   pct(ttOnly.viewsForYou / ttOnly.views), '/', pct(ttOnly.viewsSearch / ttOnly.views))
 console.log('spectatori / noi ......', ttOnly.viewers, '/', ttOnly.newViewers)
 void METRICS
+
+// 13) El traductor de Supabase deja cada campo que el panel espera.
+//     Un nombre de columna mal escrito daría `null` en silencio y rompería
+//     los gráficos sin decir por qué, así que aquí se comprueba uno a uno.
+const dbRow = (network, extra) => ({
+  network,
+  year: 2026,
+  month: 8, // en la base de datos los meses van de 1 a 12
+  views: '1000',
+  profile_visits: '100',
+  interactions: '80',
+  likes: '50',
+  comments: '10',
+  shares: '20',
+  followers: '5000',
+  followers_start: '4900',
+  net_growth: '100',
+  spend: '250.00',
+  impressions: '60000',
+  clicks: '700',
+  paid_followers: '90',
+  ...extra,
+})
+
+const mapped = monthsFromDatabase([
+  dbRow('instagram', {
+    views_followers: '400',
+    views_non_followers: '600',
+    views_posts: '220',
+    views_reels: '580',
+    views_stories: '200',
+    link_taps: '30',
+    saves: '15',
+    post_likes: '20',
+    post_shares: '8',
+    reel_likes: '30',
+    reel_shares: '12',
+    content_published: '14',
+    follows: '130',
+    unfollows: '30',
+  }),
+  dbRow('tiktok', {
+    views_for_you: '750',
+    views_search: '60',
+    viewers: '420',
+    new_viewers: '210',
+  }),
+])
+
+if (mapped.months.length !== 1) errs.push('el traductor debería devolver 1 mes completo')
+if (mapped.incomplete.length !== 0) errs.push('el mes tenía las dos redes: no debería quedar incompleto')
+
+const mappedMonth = mapped.months[0]
+if (mappedMonth.month !== 7) errs.push('los meses deberían pasar de 1-12 a 0-11')
+if (mappedMonth.key !== '2026-08') errs.push('clave de mes mal formada')
+
+IDS.forEach((id) => {
+  METRIC_IDS.forEach((mid) => {
+    const value = mappedMonth.networks[id]?.[mid]
+    if (reports(id, mid) && typeof value !== 'number')
+      errs.push(`el traductor pierde ${mid} de ${id}`)
+  })
+  if (typeof mappedMonth.networks[id]?.followersStart !== 'number')
+    errs.push(`el traductor pierde followersStart de ${id}`)
+})
+
+// Un mes al que le falta una red no se muestra: rellenarla con ceros
+// inventaría cifras y daría saltos falsos en los gráficos.
+const partial = monthsFromDatabase([dbRow('tiktok', { views_for_you: '1', views_search: '1', viewers: '1', new_viewers: '1' })])
+if (partial.months.length !== 0) errs.push('un mes sin todas las redes no debería mostrarse')
+if (partial.incomplete.length !== 1) errs.push('el mes incompleto debería reportarse')
+
+console.log(
+  errs.length
+    ? `\nFALLOS DEL TRADUCTOR (${errs.length}):\n` + errs.slice(0, 10).join('\n')
+    : '\n✓ traductor de Supabase OK',
+)

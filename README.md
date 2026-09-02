@@ -75,7 +75,7 @@ el detalle.
 | **Rată de creștere** | `creștere netă ÷ comunitate la inicio del periodo` | |
 
 Todos los ratios se calculan **sobre totales ya sumados**, nunca promediando los
-ratios mensuales. `npm run check:data` comprueba exactamente eso, entre otras 11
+ratios mensuales. `npm run check:data` comprueba exactamente eso, entre otras 12
 verificaciones (cuadre de campañas, continuidad de la comunidad entre meses,
 que un saldo no se sume, que una métrica de una sola red no se agregue como si
 fuera de las dos…).
@@ -156,40 +156,85 @@ abierto.
 
 ### Conectar Supabase
 
-1. Crear una tabla `monthly_stats` con `network_id`, `year`, `month` y una
-   columna por cada `id` del catálogo de métricas, y otra `campaigns` con los
-   campos de [`socialData.js`](src/data/socialData.js) (incluido `status`).
-2. Sustituir la exportación de `MONTHLY` y `CAMPAIGNS` en `socialData.js` por la
-   lectura de Supabase, manteniendo la forma.
-3. Activar los botones de guardar en
-   [`DataEntryDrawer.jsx`](src/components/entry/DataEntryDrawer.jsx) y
-   [`CampaignDrawer.jsx`](src/components/entry/CampaignDrawer.jsx).
+El esquema está en [`supabase/migrations`](supabase/migrations). Se pega entero
+en **SQL Editor → Run** y crea:
 
-La inversión mensual de cada red se recalcula sola a partir de las campañas, así
-que al guardar una campaña no hay que tocar nada más.
+- `campaigns` — una fila por campaña, con restricciones que impiden cifras
+  imposibles (menos clics que impresiones, menos seguidores que clics…).
+- `monthly_stats` — una fila por red y mes, con lo que se copia de cada app.
+  Una restricción por red verifica que estén sus campos y ninguno del otro.
+- `monthly_metrics` — la vista que lee el panel. Calcula aquí todo lo deducible
+  en vez de guardarlo dos veces: los totales de interacciones, la comunidad al
+  inicio del mes y **el gasto mensual, que siempre es la suma de las campañas de
+  ese mes**. Así el detalle y el resumen no pueden contradecirse.
 
-Las vistas no necesitan cambios: todo lee de
-[`selectors.js`](src/data/selectors.js).
+Después, copia `.env.example` a `.env.local` y rellena los dos valores de
+**Project Settings → API**:
+
+```
+VITE_SUPABASE_URL=https://TU_PROJECT_REF.supabase.co
+VITE_SUPABASE_ANON_KEY=la clave anon public
+```
+
+`.env.local` está en el `.gitignore`. Nunca pongas ahí la clave `service_role`:
+se salta las reglas de seguridad y en una app de navegador quedaría a la vista.
+
+### De dónde lee el panel
+
+[`dataset.js`](src/data/dataset.js) decide el origen y lo publica a React con
+`useSyncExternalStore`:
+
+| Situación | Qué se muestra |
+|---|---|
+| Sin `.env.local` | Datos de demostración |
+| Base de datos vacía | Datos de demostración |
+| Consulta fallida | Datos de demostración, con el aviso cambiado a advertencia |
+| Con datos | Los datos reales |
+
+El aviso fijo de la esquina **cambia de texto según el origen**: solo dice que
+las cifras son inventadas cuando de verdad lo son.
+
+Dos detalles del traductor ([`fromDatabase.js`](src/data/fromDatabase.js)): los
+meses pasan de 1-12 a 0-11, y **un mes al que le falte una red no se muestra**
+— rellenarla con ceros inventaría cifras y daría saltos falsos en los gráficos.
+Esos meses se cuentan en el aviso.
+
+### Guardar desde el panel
+
+Los dos formularios siguen con el botón desactivado. Ahora que las tablas
+existen, activarlos es escribir el `insert`/`update` correspondiente en
+[`DataEntryDrawer.jsx`](src/components/entry/DataEntryDrawer.jsx) y
+[`CampaignDrawer.jsx`](src/components/entry/CampaignDrawer.jsx). Antes hay que
+decidir cómo entra la gente: las políticas de seguridad solo dejan escribir a
+usuarios con sesión iniciada, y el panel todavía no tiene login.
 
 ## Estructura
 
 ```
 src/
+  lib/
+    supabase.js     cliente, o null si no hay .env.local
   data/
     metrics.js      catálogo de métricas y campos del formulario
     networks.js     redes, su color fijo y las paletas validadas
-    socialData.js   generador determinista de datos de demo (ene-2024 → ago-2026)
+    campaigns.js    objetivos y estados de campaña
+    calendar.js     meses en rumano
+    demoData.js     generador determinista de datos de demostración
+    fromDatabase.js traduce las filas de Supabase a la forma del panel
+    dataset.js      decide el origen de los datos y lo publica a React
     selectors.js    agregación mensual / trimestral / anual + formato ro-RO
     exportCsv.js    volcado a CSV de cualquier tabla
     navigation.js   secciones del panel
   components/
-    entry/          formulario de entrada de datos
-    layout/         barra lateral, barra superior, logo
+    entry/          formularios de datos mensuales y de campañas
+    layout/         barra lateral, barra superior, logo, aviso de pruebas
     ui/             Drawer, Card, StatTile, DeltaBadge, Sparkline, tablas, filtros
     charts/         ChartFrame + tipos de gráfico + tema común de ejes y marcas
   views/            una por sección
 scripts/
-  check-data.mjs    12 verificaciones de coherencia de los cálculos
+  check-data.mjs    13 verificaciones de coherencia de los cálculos
+supabase/
+  migrations/       el esquema de la base de datos
 ```
 
 El logo está en `public/logo.png`.

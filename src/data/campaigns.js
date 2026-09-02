@@ -12,6 +12,8 @@ export const OBJECTIVES = [
   { id: 'trafic', label: 'Trafic', cpmMult: 1.05, ctrMult: 1.4, followerMult: 0.62 },
 ]
 
+export const OBJECTIVE_BY_ID = Object.fromEntries(OBJECTIVES.map((o) => [o.id, o]))
+
 export const STATUSES = [
   {
     id: 'planificata',

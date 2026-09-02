@@ -12,7 +12,7 @@ import SeriesBars from '../components/charts/SeriesBars'
 import CampaignDrawer from '../components/entry/CampaignDrawer'
 import { NETWORK_BY_ID } from '../data/networks'
 import { OBJECTIVES, STATUSES, STATUS_BY_ID } from '../data/campaigns'
-import { MONTH_LABELS } from '../data/socialData'
+import { MONTH_LABELS } from '../data/calendar'
 import {
   campaignRows,
   campaignTotals,

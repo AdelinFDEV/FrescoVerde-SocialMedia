@@ -1,3 +1,4 @@
+import { monthMeta } from './calendar'
 import { OBJECTIVES } from './campaigns'
 import { NETWORKS } from './networks'
 
@@ -17,11 +18,6 @@ function lcg(seed) {
   return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296)
 }
 
-export const MONTH_LABELS = ['Ian', 'Feb', 'Mar', 'Apr', 'Mai', 'Iun', 'Iul', 'Aug', 'Sep', 'Oct', 'Noi', 'Dec']
-export const MONTH_LABELS_LONG = [
-  'Ianuarie', 'Februarie', 'Martie', 'Aprilie', 'Mai', 'Iunie',
-  'Iulie', 'August', 'Septembrie', 'Octombrie', 'Noiembrie', 'Decembrie',
-]
 
 const START_YEAR = 2024
 const MONTHS = 32 // ian-2024 → aug-2026
@@ -73,23 +69,11 @@ const CAMPAIGN_NAMES = [
 ]
 
 function buildMonths() {
-  const rows = []
-  for (let i = 0; i < MONTHS; i++) {
-    const year = START_YEAR + Math.floor(i / 12)
-    const month = i % 12
-    rows.push({
-      key: `${year}-${String(month + 1).padStart(2, '0')}`,
-      index: i,
-      year,
-      month,
-      quarter: Math.floor(month / 3) + 1,
-      label: MONTH_LABELS[month],
-      longLabel: `${MONTH_LABELS[month]} ${year}`,
-      fullLabel: `${MONTH_LABELS_LONG[month]} ${year}`,
-      networks: {},
-    })
-  }
-  return rows
+  return Array.from({ length: MONTHS }, (_, i) => ({
+    ...monthMeta(START_YEAR + Math.floor(i / 12), i % 12),
+    index: i,
+    networks: {},
+  }))
 }
 
 /** Reparte el presupuesto del mes en 1-3 campañas con objetivos distintos. */
@@ -260,8 +244,5 @@ function generate() {
 
 const generated = generate()
 
-export const MONTHLY = generated.months
-export const CAMPAIGNS = generated.campaigns
-
-export const YEARS = [...new Set(MONTHLY.map((m) => m.year))]
-export const CURRENT_YEAR = YEARS[YEARS.length - 1]
+export const DEMO_MONTHLY = generated.months
+export const DEMO_CAMPAIGNS = generated.campaigns

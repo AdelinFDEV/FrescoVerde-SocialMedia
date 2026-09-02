@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { Database } from 'lucide-react'
 import { NETWORKS, NETWORK_BY_ID } from '../../data/networks'
 import { OBJECTIVES, RESULT_FIELDS, STATUSES, STATUS_BY_ID } from '../../data/campaigns'
-import { MONTH_LABELS_LONG, YEARS } from '../../data/socialData'
+import { MONTH_LABELS_LONG } from '../../data/calendar'
+import useDataset from '../../data/useDataset'
 import { fmtDec2, fmtEur2, fmtPct } from '../../data/selectors'
 import Drawer from '../ui/Drawer'
 import SegmentedControl from '../ui/SegmentedControl'
@@ -58,6 +59,10 @@ const inputClass =
 export default function CampaignDrawer({ open, onClose, campaign, defaultYear }) {
   const isEdit = !!campaign
   const [form, setForm] = useState(() => initialForm(campaign, defaultYear))
+
+  // Los años disponibles salen de los datos cargados, no de una constante.
+  const { months: loadedMonths } = useDataset()
+  const years = [...new Set(loadedMonths.map((m) => m.year))]
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
@@ -204,7 +209,7 @@ export default function CampaignDrawer({ open, onClose, campaign, defaultYear })
                 aria-label="An"
                 className="rounded-lg border border-ink-200 bg-white px-2.5 py-1.5 text-sm text-ink-900"
               >
-                {YEARS.map((y) => (
+                {years.map((y) => (
                   <option key={y} value={y}>
                     {y}
                   </option>

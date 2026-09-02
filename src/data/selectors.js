@@ -1,6 +1,6 @@
 import { ALL_NETWORK_IDS } from './networks'
 import { METRICS, METRIC_IDS, reportersOf } from './metrics'
-import { CAMPAIGNS, MONTHLY } from './socialData'
+import { campaigns as allCampaigns, months as allMonths } from './dataset'
 
 const ratio = (num, den) => (den > 0 ? num / den : null)
 
@@ -42,7 +42,7 @@ function sumOver(source, activeIds, id) {
 
 /** Filas mensuales de un año, con totales y una columna por red. */
 export function monthlyRows(year, activeIds = ALL_NETWORK_IDS) {
-  return MONTHLY.filter((m) => m.year === year).map((m) => {
+  return allMonths().filter((m) => m.year === year).map((m) => {
     const row = {
       key: m.key,
       label: m.label,
@@ -128,7 +128,7 @@ export function quarterlyRows(year, activeIds = ALL_NETWORK_IDS) {
 
 /** Resumen por año completo (el último puede estar en curso). */
 export function annualRows(activeIds = ALL_NETWORK_IDS) {
-  const years = [...new Set(MONTHLY.map((m) => m.year))]
+  const years = [...new Set(allMonths().map((m) => m.year))]
   return years.map((year) => {
     const rows = monthlyRows(year, activeIds)
     return {
@@ -185,7 +185,7 @@ export function yearOverYear(year, activeIds = ALL_NETWORK_IDS) {
 /* ---- Campañas ---------------------------------------------------------- */
 
 export function campaignRows({ year, quarter = null, month = null, activeIds = ALL_NETWORK_IDS }) {
-  return CAMPAIGNS.filter(
+  return allCampaigns().filter(
     (c) =>
       activeIds.includes(c.networkId) &&
       c.year === year &&

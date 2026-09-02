@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { Database, Info } from 'lucide-react'
 import { NETWORKS, NETWORK_BY_ID } from '../../data/networks'
 import { DERIVED_NOTE, ENTRY_FIELDS, METRICS } from '../../data/metrics'
-import { MONTH_LABELS_LONG, YEARS } from '../../data/socialData'
+import { MONTH_LABELS_LONG } from '../../data/calendar'
+import useDataset from '../../data/useDataset'
 import Drawer from '../ui/Drawer'
 import SegmentedControl from '../ui/SegmentedControl'
 
@@ -18,6 +19,10 @@ export default function DataEntryDrawer({ open, onClose, defaultYear }) {
   const [year, setYear] = useState(defaultYear)
   const [month, setMonth] = useState(new Date().getMonth())
   const [values, setValues] = useState({})
+
+  // Los años disponibles salen de los datos cargados, no de una constante.
+  const { months: loadedMonths } = useDataset()
+  const years = [...new Set(loadedMonths.map((m) => m.year))]
 
   const fields = ENTRY_FIELDS[network]
   const keyOf = (id) => `${network}-${year}-${month}-${id}`
@@ -100,7 +105,7 @@ export default function DataEntryDrawer({ open, onClose, defaultYear }) {
             aria-label="An"
             className="rounded-lg border border-ink-200 bg-white px-2.5 py-1.5 text-sm font-medium text-ink-800"
           >
-            {YEARS.map((y) => (
+            {years.map((y) => (
               <option key={y} value={y}>
                 {y}
               </option>
