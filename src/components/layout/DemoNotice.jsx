@@ -86,16 +86,23 @@ export default function DemoNotice() {
       role="status"
       aria-live="polite"
       aria-label="Starea panoului"
-      // En el móvil, clavado abajo del todo; el relleno de seguridad evita que
-      // el indicador de inicio del iPhone se coma la última línea.
-      className="fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)] sm:inset-x-auto sm:bottom-5 sm:right-5 sm:max-w-sm sm:pb-0 lg:bottom-4 lg:left-4 lg:right-auto lg:w-52"
+      // Clavado al borde de abajo. `transform-gpu` lo sube a su propia capa:
+      // en iOS, un elemento fijo que comparte capa con la página tiembla
+      // mientras el scroll tiene inercia.
+      className="fixed inset-x-0 bottom-0 z-40 transform-gpu sm:inset-x-auto sm:bottom-5 sm:right-5 sm:max-w-sm lg:bottom-4 lg:left-4 lg:right-auto lg:w-52"
     >
-      <div className="flex items-start gap-3 border-t border-ink-600 bg-ink-700 px-4 py-2.5 text-white shadow-[0_-4px_20px_-8px_rgba(28,35,43,0.45)] sm:rounded-2xl sm:border sm:py-3 sm:shadow-[0_16px_40px_-16px_rgba(28,35,43,0.55)] lg:flex-col lg:gap-2 lg:shadow-none">
+      {/* El relleno de zona segura va DENTRO de la caja oscura, no debajo: si
+          fuera del recuadro, al esconder Safari su barra inferior el hueco que
+          aparece (el del indicador de inicio) se vería transparente. */}
+      <div className="flex items-start gap-3 border-t border-ink-600 bg-ink-700 px-4 pb-[calc(0.625rem+env(safe-area-inset-bottom))] pt-2.5 text-white shadow-[0_-4px_20px_-8px_rgba(28,35,43,0.45)] sm:rounded-2xl sm:border sm:pb-3 sm:pt-3 sm:shadow-[0_16px_40px_-16px_rgba(28,35,43,0.55)] lg:flex-col lg:gap-2 lg:shadow-none">
         {/* La luz: un punto lleno con un halo que late solo cuando está verde. */}
         <span className="relative mt-1 grid size-3 shrink-0 place-items-center lg:mt-0">
           {verde ? (
+            // El halo late sin parar dentro de una barra fija: se anima solo
+            // con transform y opacity, y en su propia capa, para que cada
+            // fotograma no obligue a repintar la barra entera al desplazarse.
             <span
-              className="absolute inset-0 rounded-full opacity-60"
+              className="absolute inset-0 rounded-full opacity-60 will-change-[transform,opacity]"
               style={{ background: light, animation: 'puls 2s ease-out infinite' }}
               aria-hidden="true"
             />

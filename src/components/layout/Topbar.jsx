@@ -20,7 +20,15 @@ export default function Topbar({ view, year, years, onYear, active, onToggleNetw
     if (!el) return
     // La primera medida es síncrona, antes de pintar: si dependiera del
     // observador, el primer fotograma saldría con el contenido bajo la barra.
-    const measure = () => setHeight(el.getBoundingClientRect().height)
+    //
+    // Se redondea y solo se guarda si cambia de verdad. En iOS, esconder y
+    // sacar la barra del navegador dispara medidas con diferencias de una
+    // fracción de píxel; guardarlas todas repintaba el hueco a cada una y eso
+    // se ve como pequeños saltos del contenido mientras se desplaza.
+    const measure = () => {
+      const next = Math.round(el.getBoundingClientRect().height)
+      setHeight((prev) => (prev === next ? prev : next))
+    }
     measure()
     // El observador solo se ocupa de lo que venga después: girar el teléfono,
     // o los chips de red pasando a dos líneas.
@@ -33,7 +41,10 @@ export default function Topbar({ view, year, years, onYear, active, onToggleNetw
     <>
     <header
       ref={barRef}
-      className="fixed inset-x-0 top-0 z-30 border-b border-ink-100 bg-white lg:sticky lg:inset-x-auto lg:z-20"
+      // `transform-gpu` la sube a su propia capa de composición: en iOS, una
+      // barra fija que comparte capa con la página se desplaza a tirones
+      // mientras el scroll lleva inercia, en vez de quedarse quieta.
+      className="fixed inset-x-0 top-0 z-30 transform-gpu border-b border-ink-100 bg-white pt-[env(safe-area-inset-top)] lg:sticky lg:inset-x-auto lg:z-20 lg:pt-0"
     >
       <div className="flex items-center gap-3 px-4 py-2 sm:px-8 sm:py-3.5">
         {/* En móvil las secciones viven en un panel: nueve pestañas en una fila
