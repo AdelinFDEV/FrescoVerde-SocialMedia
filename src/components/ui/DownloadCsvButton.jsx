@@ -7,10 +7,11 @@ export default function DownloadCsvButton({ columns, rows, name, year, label = '
 
   return (
     <button
+      type="button"
       onClick={() => downloadCsv(csvFilename(name, year), toCsv(columns, rows))}
       title={label}
       aria-label={label}
-      className="rounded-lg border border-ink-100 bg-white p-2 text-ink-500 transition-colors hover:border-ink-200 hover:text-ink-800"
+      className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-ink-100 bg-white text-ink-500 transition-colors hover:border-ink-200 hover:text-ink-800 sm:min-h-0 sm:min-w-0 sm:p-2"
     >
       <Download size={16} strokeWidth={2.2} />
     </button>

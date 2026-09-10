@@ -147,7 +147,7 @@ export default function Campanii({ year, networks, activeIds }) {
           onClick={() => setEditing(r)}
           title={`Editează ${r.name}`}
           aria-label={`Editează campania ${r.name}`}
-          className="rounded-lg border border-ink-100 p-1.5 text-ink-400 transition-colors hover:border-ink-200 hover:text-ink-800"
+          className="grid min-h-10 min-w-10 place-items-center rounded-lg border border-ink-100 text-ink-400 transition-colors hover:border-ink-200 hover:text-ink-800 sm:min-h-0 sm:min-w-0 sm:p-1.5"
         >
           <Pencil size={14} strokeWidth={2.2} />
         </button>
@@ -188,7 +188,7 @@ export default function Campanii({ year, networks, activeIds }) {
   const newButton = (
     <button
       onClick={() => setEditing('new')}
-      className="flex shrink-0 items-center gap-1.5 rounded-xl bg-ink-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-ink-700"
+      className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-ink-600 px-3.5 text-sm font-semibold text-white transition-colors hover:bg-ink-700 sm:min-h-0 sm:py-2"
     >
       <Plus size={16} strokeWidth={2.6} className="text-neon-400" />
       Campanie nouă
@@ -362,8 +362,11 @@ export default function Campanii({ year, networks, activeIds }) {
               Apasă pe creion ca să editezi rezultatele sau starea.
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <SegmentedControl size="sm" label="Ordonare" options={SORTS} value={sort} onChange={setSort} />
+          {/* Tres criterios de orden no caben junto al título en un móvil. */}
+          <div className="flex w-full items-center gap-2 sm:w-auto sm:shrink-0">
+            <div className="-mx-1 min-w-0 flex-1 overflow-x-auto px-1 py-0.5 sm:mx-0 sm:flex-none sm:overflow-visible sm:px-0">
+              <SegmentedControl size="sm" label="Ordonare" options={SORTS} value={sort} onChange={setSort} />
+            </div>
             <DownloadCsvButton columns={campaignColumns} rows={sorted} name="campanii" year={year} />
           </div>
         </div>

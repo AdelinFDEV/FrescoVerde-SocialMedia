@@ -7,10 +7,12 @@ export default function ChipGroup({ options, value, onChange, label }) {
         return (
           <button
             key={String(opt.value)}
+            type="button"
             role="tab"
             aria-selected={active}
             onClick={() => onChange(opt.value)}
-            className={`rounded-lg border px-2.5 py-2 text-sm font-medium transition-all duration-200 sm:py-1 ${
+            // 40 px de alto en el móvil: son doce meses en fila, se fallan.
+            className={`min-h-10 whitespace-nowrap rounded-lg border px-3 text-sm font-medium transition-all duration-200 sm:min-h-0 sm:px-2.5 sm:py-1 ${
               active
                 ? 'border-ink-600 bg-ink-600 text-white'
                 : 'border-ink-100 bg-white text-ink-500 hover:border-ink-200 hover:text-ink-800'

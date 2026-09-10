@@ -50,7 +50,7 @@ const Field = ({ label, hint, children }) => (
 )
 
 const inputClass =
-  'w-44 rounded-lg border border-ink-200 bg-white px-3 py-1.5 text-sm text-ink-900 outline-none transition-colors focus:border-ink-600'
+  'min-h-11 w-44 rounded-lg border border-ink-200 bg-white px-3 text-base text-ink-900 outline-none transition-colors focus:border-ink-600 sm:min-h-0 sm:py-1.5 sm:text-sm'
 
 /**
  * Alta y edición de una campaña: ficha, resultados y estado.
@@ -183,14 +183,14 @@ export default function CampaignDrawer({ open, onClose, campaign, defaultYear })
           <div className="flex justify-end gap-2">
             <button
               onClick={onClose}
-              className="rounded-xl border border-ink-200 px-4 py-2 text-sm font-medium text-ink-600 transition-colors hover:bg-ink-50"
+              className="min-h-11 rounded-xl border border-ink-200 px-4 text-sm font-medium text-ink-600 transition-colors hover:bg-ink-50 sm:min-h-0 sm:py-2"
             >
               Anulează
             </button>
             <button
               onClick={handleSave}
               disabled={!canSave}
-              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+              className={`inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-semibold transition-colors sm:min-h-0 sm:py-2 ${
                 canSave
                   ? 'bg-ink-600 text-white hover:bg-ink-700'
                   : 'cursor-not-allowed bg-ink-200 text-ink-500'

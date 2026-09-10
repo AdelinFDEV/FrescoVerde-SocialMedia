@@ -8,13 +8,14 @@ export default function Topbar({ view, year, years, onYear, active, onToggleNetw
 
   return (
     <header className="sticky top-0 z-20 border-b border-ink-100 bg-white">
-      <div className="flex items-center gap-3 px-4 py-3 sm:px-8 sm:py-3.5">
-        {/* En móvil las secciones viven en un panel: ocho pestañas en una fila
+      <div className="flex items-center gap-3 px-4 py-2 sm:px-8 sm:py-3.5">
+        {/* En móvil las secciones viven en un panel: nueve pestañas en una fila
             obligarían a arrastrar a ciegas para llegar a la última. */}
         <button
+          type="button"
           onClick={onOpenNav}
           aria-label="Deschide secțiunile"
-          className="-ml-1 shrink-0 rounded-xl p-2.5 text-ink-600 transition-colors hover:bg-ink-50 lg:hidden"
+          className="-ml-1 grid min-h-11 min-w-11 shrink-0 place-items-center rounded-xl text-ink-600 transition-colors hover:bg-ink-50 lg:hidden"
         >
           <Menu size={20} strokeWidth={2.2} />
         </button>
@@ -35,16 +36,17 @@ export default function Topbar({ view, year, years, onYear, active, onToggleNetw
         />
 
         <button
+          type="button"
           onClick={onAddData}
           aria-label="Adaugă date"
-          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-ink-600 px-2.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-ink-700 sm:px-3.5 sm:py-2"
+          className="flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-ink-600 text-sm font-semibold text-white transition-colors hover:bg-ink-700 sm:min-h-0 sm:min-w-0 sm:px-3.5 sm:py-2"
         >
           <Plus size={16} strokeWidth={2.6} className="text-neon-400" />
           <span className="hidden sm:inline">Adaugă date</span>
         </button>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto px-4 pb-2.5 sm:px-8 sm:pb-3">
+      <div className="flex items-center gap-2 overflow-x-auto px-4 pb-2 sm:px-8 sm:pb-3">
         <span className="shrink-0 text-xs font-medium uppercase tracking-wide text-ink-400">Rețele</span>
         {NETWORKS.map((n) => {
           const on = active.includes(n.id)
@@ -52,11 +54,12 @@ export default function Topbar({ view, year, years, onYear, active, onToggleNetw
           return (
             <button
               key={n.id}
+              type="button"
               onClick={() => onToggleNetwork(n.id)}
               disabled={only}
               aria-pressed={on}
               title={only ? 'Trebuie să rămână cel puțin o rețea activă' : undefined}
-              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-sm font-medium transition-all duration-200 sm:py-1.5 ${
+              className={`flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-sm font-medium transition-all duration-200 sm:min-h-0 sm:px-3 sm:py-1.5 ${
                 on
                   ? 'border-ink-200 bg-white text-ink-800 shadow-[0_1px_2px_rgba(28,35,43,0.06)]'
                   : 'border-ink-100 bg-ink-50 text-ink-400 hover:text-ink-600'

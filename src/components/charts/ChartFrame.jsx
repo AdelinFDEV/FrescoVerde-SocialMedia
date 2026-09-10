@@ -27,9 +27,10 @@ export default function ChartFrame({
 
   return (
     <Card className={`p-4 sm:p-6 ${className}`} delay={delay}>
-      <div className="flex items-start justify-between gap-3">
-        {/* El bloque de texto encoge; los controles nunca bajan de línea. */}
-        <div className="min-w-0 flex-1">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        {/* El texto encoge, pero nunca por debajo de una línea legible: si los
+            controles no caben, bajan ellos. */}
+        <div className="min-w-0 flex-1 basis-40">
           <h2 id={id} className="flex flex-wrap items-center gap-2 text-base font-semibold tracking-tight text-ink-900">
             {title}
             {/* Aviso de alcance: qué redes reportan de verdad esta métrica. */}
@@ -41,15 +42,24 @@ export default function ChartFrame({
           </h2>
           {subtitle ? <p className="mt-0.5 text-sm text-ink-500">{subtitle}</p> : null}
         </div>
+        {/* En el móvil el selector de indicador no cabe junto al título: baja a
+            su propia línea y, si aún así no cabe, se desliza. */}
+        {actions ? (
+          <div className="order-last -mx-1 w-full overflow-x-auto px-1 py-0.5 sm:order-none sm:mx-0 sm:w-auto sm:overflow-visible sm:px-0">
+            {actions}
+          </div>
+        ) : null}
+
         <div className="flex shrink-0 items-center gap-2">
-          {actions}
           {table ? (
             <>
               <button
+                type="button"
                 onClick={() => setAsTable((v) => !v)}
                 aria-pressed={asTable}
+                aria-label={asTable ? 'Vezi graficul' : 'Vezi tabelul de date'}
                 title={asTable ? 'Vezi graficul' : 'Vezi tabelul de date'}
-                className="rounded-lg border border-ink-100 bg-white p-2 text-ink-500 transition-colors hover:border-ink-200 hover:text-ink-800"
+                className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-ink-100 bg-white text-ink-500 transition-colors hover:border-ink-200 hover:text-ink-800 sm:min-h-0 sm:min-w-0 sm:p-2"
               >
                 {asTable ? (
                   <ChartSpline size={16} strokeWidth={2.2} />

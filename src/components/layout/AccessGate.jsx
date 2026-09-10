@@ -65,7 +65,7 @@ export default function AccessGate({ children }) {
               }}
               autoFocus
               autoComplete="current-password"
-              className="mt-1.5 w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none transition-colors focus:border-ink-600"
+              className="mt-1.5 w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-base text-ink-900 outline-none transition-colors focus:border-ink-600 sm:text-sm"
             />
           </label>
 
@@ -76,7 +76,7 @@ export default function AccessGate({ children }) {
           <button
             type="submit"
             disabled={!password || state === 'checking'}
-            className={`mt-5 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+            className={`mt-5 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition-colors sm:min-h-0 sm:py-2.5 ${
               password && state !== 'checking'
                 ? 'bg-ink-600 text-white hover:bg-ink-700'
                 : 'cursor-not-allowed bg-ink-200 text-ink-500'

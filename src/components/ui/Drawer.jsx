@@ -96,14 +96,15 @@ export default function Drawer({
           @keyframes drawerInLeft { from { transform: translateX(-24px); opacity: 0 } }
         `}</style>
 
-        <header className="flex items-start justify-between gap-4 border-b border-ink-100 px-6 py-4">
+        <header className="flex items-start justify-between gap-4 border-b border-ink-100 px-4 py-4 sm:px-6">
           <div>
             <h2 className="text-lg font-semibold tracking-tight text-ink-900">{title}</h2>
             {subtitle ? <p className="mt-0.5 text-sm text-ink-500">{subtitle}</p> : null}
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-ink-400 transition-colors hover:bg-ink-50 hover:text-ink-800"
+            className="grid min-h-11 min-w-11 shrink-0 place-items-center rounded-lg text-ink-400 transition-colors hover:bg-ink-50 hover:text-ink-800 sm:min-h-0 sm:min-w-0 sm:p-2"
             aria-label="Închide"
           >
             <X size={18} strokeWidth={2.2} />
@@ -112,9 +113,9 @@ export default function Drawer({
 
         {toolbar}
 
-        <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
+        <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">{children}</div>
 
-        <footer className="border-t border-ink-100 px-6 py-4">{footer}</footer>
+        <footer className="border-t border-ink-100 px-4 py-4 sm:px-6">{footer}</footer>
       </aside>
     </div>
   )

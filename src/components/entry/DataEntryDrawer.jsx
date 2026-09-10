@@ -187,7 +187,7 @@ export default function DataEntryDrawer({ open, onClose, defaultYear }) {
       title="Adaugă date lunare"
       subtitle="Copiază cifrele din statisticile aplicației pentru luna aleasă."
       toolbar={
-        <div className="flex flex-wrap items-center gap-3 border-b border-ink-100 bg-ink-50/60 px-6 py-3">
+        <div className="flex flex-wrap items-center gap-2 border-b border-ink-100 bg-ink-50/60 px-4 py-3 sm:gap-3 sm:px-6">
           <SegmentedControl
             size="sm"
             label="Rețea"
@@ -199,7 +199,7 @@ export default function DataEntryDrawer({ open, onClose, defaultYear }) {
             value={month}
             onChange={(e) => setMonth(Number(e.target.value))}
             aria-label="Luna"
-            className="rounded-lg border border-ink-200 bg-white px-2.5 py-1.5 text-sm font-medium text-ink-800"
+            className="min-h-11 rounded-lg border border-ink-200 bg-white px-2.5 text-base font-medium text-ink-800 sm:min-h-0 sm:py-1.5 sm:text-sm"
           >
             {MONTH_LABELS_LONG.map((m, i) => (
               <option key={m} value={i}>
@@ -211,7 +211,7 @@ export default function DataEntryDrawer({ open, onClose, defaultYear }) {
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
             aria-label="An"
-            className="rounded-lg border border-ink-200 bg-white px-2.5 py-1.5 text-sm font-medium text-ink-800"
+            className="min-h-11 rounded-lg border border-ink-200 bg-white px-2.5 text-base font-medium text-ink-800 sm:min-h-0 sm:py-1.5 sm:text-sm"
           >
             {years.map((y) => (
               <option key={y} value={y}>
@@ -244,20 +244,20 @@ export default function DataEntryDrawer({ open, onClose, defaultYear }) {
             </div>
           ) : null}
 
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             {isSupabaseConfigured && missing.length ? (
               <span className="mr-auto text-sm text-ink-400">Mai lipsesc {missing.length} câmpuri</span>
             ) : null}
             <button
               onClick={onClose}
-              className="rounded-xl border border-ink-200 px-4 py-2 text-sm font-medium text-ink-600 transition-colors hover:bg-ink-50"
+              className="min-h-11 rounded-xl border border-ink-200 px-4 text-sm font-medium text-ink-600 transition-colors hover:bg-ink-50 sm:min-h-0 sm:py-2"
             >
               Anulează
             </button>
             <button
               onClick={handleSave}
               disabled={!canSave}
-              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+              className={`inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-semibold transition-colors sm:min-h-0 sm:py-2 ${
                 canSave
                   ? 'bg-ink-600 text-white hover:bg-ink-700'
                   : 'cursor-not-allowed bg-ink-200 text-ink-500'
@@ -312,14 +312,14 @@ export default function DataEntryDrawer({ open, onClose, defaultYear }) {
                   </span>
                 ) : null}
               </span>
-              <span className="relative shrink-0">
+              <span className="relative w-full shrink-0 sm:w-auto">
                 <input
                   type="text"
                   inputMode="decimal"
                   value={get(f.id)}
                   onChange={(e) => set(f.id, e.target.value)}
                   placeholder={f.type === 'pct' ? '0,0' : '0'}
-                  className="tnum w-36 rounded-lg border border-ink-200 bg-white py-1.5 pl-3 pr-8 text-right text-sm text-ink-900 outline-none transition-colors focus:border-ink-600"
+                  className="tnum min-h-11 w-full rounded-lg border border-ink-200 bg-white pl-3 pr-8 text-right text-base text-ink-900 outline-none transition-colors focus:border-ink-600 sm:min-h-0 sm:w-36 sm:py-1.5 sm:text-sm"
                 />
                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-ink-400">
                   {f.type === 'pct' ? '%' : ''}

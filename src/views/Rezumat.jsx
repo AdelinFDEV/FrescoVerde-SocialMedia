@@ -32,6 +32,22 @@ export default function Rezumat({ year, networks, activeIds }) {
   const hero = useCountUp(current.followers, 1100)
 
   const perioada = partial ? `în ${months} luni din ${year}` : `în anul ${year}`
+
+  // Un mes que pierde seguidores no los «gana», y sin crecimiento neto no hay
+  // coste por seguidor conservado: la frase se arma según lo que pasó de verdad,
+  // en vez de dejar un guion suelto en mitad de la línea.
+  const resumen = [
+    current.netGrowth >= 0
+      ? `${fmtSignedInt(current.netGrowth)} urmăritori câștigați net`
+      : `${fmtInt(Math.abs(current.netGrowth))} urmăritori pierduți net`,
+    `cu o investiție de ${fmtEur(current.spend)}`,
+    current.costPerNetFollower != null
+      ? `— ${fmtEur2(current.costPerNetFollower)} de fiecare urmăritor păstrat —`
+      : null,
+    `din ${fmtCompact(current.views)} vizualizări.`,
+  ]
+    .filter(Boolean)
+    .join(' ')
   // Instagram es la única red que publica altas y bajas por separado.
   const flowNets = reportersOf(activeIds, 'unfollows')
   const flowNote = flowNets.length ? `Doar ${flowNets.map((id) => NETWORK_BY_ID[id].name).join(' + ')}` : null
@@ -89,9 +105,7 @@ export default function Rezumat({ year, networks, activeIds }) {
               <DeltaBadge value={current.growthRate} suffix={perioada} size="md" />
             </div>
             <p className="mt-4 max-w-md text-sm leading-relaxed text-ink-500">
-              {fmtSignedInt(current.netGrowth)} urmăritori câștigați net cu o investiție de{' '}
-              {fmtEur(current.spend)} — {fmtEur2(current.costPerNetFollower)} de fiecare urmăritor păstrat,
-              din {fmtCompact(current.views)} vizualizări.
+              {resumen}
             </p>
           </div>
 

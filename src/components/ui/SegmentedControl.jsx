@@ -10,11 +10,13 @@ export default function SegmentedControl({ options, value, onChange, size = 'md'
         return (
           <button
             key={opt.value}
+            type="button"
             role="tab"
             aria-selected={active}
             onClick={() => onChange(opt.value)}
-            className={`relative rounded-lg font-medium transition-all duration-200 ${
-              size === 'sm' ? 'px-2.5 py-1 text-xs' : 'px-3.5 py-1.5 text-sm'
+            // En el móvil se pulsa con el dedo: los botones no bajan de 40 px.
+            className={`relative whitespace-nowrap rounded-lg font-medium transition-all duration-200 sm:min-h-0 ${
+              size === 'sm' ? 'min-h-10 px-3 text-xs sm:px-2.5 sm:py-1' : 'min-h-10 px-3.5 text-sm sm:py-1.5'
             } ${
               active
                 ? 'bg-white text-ink-900 shadow-[0_1px_2px_rgba(28,35,43,0.10)]'
