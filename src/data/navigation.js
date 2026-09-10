@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  StickyNote,
   CalendarRange,
   Eye,
   Heart,
@@ -58,6 +59,14 @@ export const VIEWS = [
     label: 'Anual',
     icon: BarChart3,
     subtitle: 'Sinteză pe ani și comparație cu anul precedent',
+  },
+  {
+    id: 'note',
+    label: 'Note',
+    icon: StickyNote,
+    subtitle: 'Însemnări despre proiect: idei, schimbări, ce rămâne de făcut',
+    // No son cifras: va al final, detrás de una línea que la separa del panel.
+    apart: true,
   },
 ]
 

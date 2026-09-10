@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import Logo from './Logo'
 import { VIEWS } from '../../data/navigation'
 
@@ -15,30 +16,33 @@ export default function Sidebar({ view, onChange }) {
       </div>
 
       <nav className="mt-8 flex flex-col gap-1">
-        {VIEWS.map(({ id, label, icon: Icon }) => {
+        {VIEWS.map(({ id, label, icon: Icon, apart }) => {
           const active = id === view
           return (
-            <button
-              key={id}
-              onClick={() => onChange(id)}
-              aria-current={active ? 'page' : undefined}
-              className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-                active ? 'bg-ink-700 text-white' : 'text-ink-200 hover:bg-ink-700/60 hover:text-white'
-              }`}
-            >
-              <span
-                className={`absolute left-0 h-5 w-1 rounded-r-full bg-neon-400 transition-all duration-300 ${
-                  active ? 'opacity-100' : 'opacity-0'
+            <Fragment key={id}>
+              {/* Las notas no son una sección de cifras más: la línea lo dice. */}
+              {apart ? <hr className="my-2 border-ink-500" /> : null}
+              <button
+                onClick={() => onChange(id)}
+                aria-current={active ? 'page' : undefined}
+                className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                  active ? 'bg-ink-700 text-white' : 'text-ink-200 hover:bg-ink-700/60 hover:text-white'
                 }`}
-                aria-hidden="true"
-              />
-              <Icon
-                size={17}
-                strokeWidth={2.2}
-                className={active ? 'text-neon-400' : 'text-ink-300 group-hover:text-white'}
-              />
-              {label}
-            </button>
+              >
+                <span
+                  className={`absolute left-0 h-5 w-1 rounded-r-full bg-neon-400 transition-all duration-300 ${
+                    active ? 'opacity-100' : 'opacity-0'
+                  }`}
+                  aria-hidden="true"
+                />
+                <Icon
+                  size={17}
+                  strokeWidth={2.2}
+                  className={active ? 'text-neon-400' : 'text-ink-300 group-hover:text-white'}
+                />
+                {label}
+              </button>
+            </Fragment>
           )
         })}
       </nav>

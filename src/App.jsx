@@ -21,6 +21,7 @@ const VIEW_COMPONENTS = {
   campanii: lazy(() => import('./views/Campanii')),
   trimestrial: lazy(() => import('./views/Trimestrial')),
   anual: lazy(() => import('./views/Anual')),
+  note: lazy(() => import('./views/Note')),
 }
 
 const Loading = ({ text = 'Se încarcă…' }) => (
@@ -46,6 +47,9 @@ export default function App() {
 
   const years = useMemo(() => [...new Set(data.months.map((m) => m.year))], [data.months])
   const year = years.includes(pickedYear) ? pickedYear : years[years.length - 1]
+  // Las notas no dependen de las cifras: se escriben igual con la base vacía,
+  // que es justo cuando más se apunta lo que falta por hacer.
+  const needsData = view !== 'note'
   const hasData = years.length > 0
 
   // El color sigue a la red, no a su posición: filtrar no repinta la visible.
@@ -89,7 +93,7 @@ export default function App() {
         <main className="flex-1 px-4 py-5 sm:px-8 sm:py-6">
           {/* Sin ninguna lună completa no hay nada que dibujar: las secciones
               esperan al menos un año de datos, así que ni se montan. */}
-          {hasData ? (
+          {hasData || !needsData ? (
             // La key fuerza el remontaje: cada cambio de vista o de año reanima.
             <div key={`${view}-${year}`} className="mx-auto max-w-[1400px]">
               <Suspense fallback={<Loading />}>
