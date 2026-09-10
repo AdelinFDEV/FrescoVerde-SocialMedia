@@ -84,6 +84,14 @@ export function explainError(error) {
   if (!error) return null
   const detail = `${error.message ?? ''}`
 
+  // Cuando la petición ni siquiera llega al servidor, Supabase devuelve el
+  // error crudo del navegador («TypeError: Failed to fetch»), que no le dice
+  // nada a quien está metiendo cifras. Hay que traducirlo y, sobre todo,
+  // decirle que lo escrito no se ha perdido.
+  if (!error.code && /failed to fetch|networkerror|load failed|fetch failed/i.test(detail)) {
+    return 'Nu s-a putut ajunge la baza de date. Verifică internetul sau dacă proiectul Supabase este activ — cifrele scrise rămân salvate în browser.'
+  }
+
   if (error.code === '42501') return 'Baza de date nu permite salvarea. Verifică politicile de securitate.'
   if (error.code === '23505') return 'Există deja date pentru această rețea și lună.'
   if (error.code === '23514') {
