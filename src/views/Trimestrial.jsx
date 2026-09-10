@@ -17,11 +17,31 @@ import {
   quarterlyRows,
 } from '../data/selectors'
 
-function QuarterCard({ row, previous, delay }) {
+function QuarterCard({ row, previous, activeIds, delay }) {
   // Un trimestre incompleto no se compara contra uno cerrado: la caída sería
   // solo el mes que falta, no un cambio real de inversión.
   const partial = row.months < 3
   const comparable = previous && previous.months === row.months
+
+  const hasIg = activeIds.includes('instagram')
+  const hasTt = activeIds.includes('tiktok')
+  // Marcar la red solo aporta cuando hay más de una a la vista.
+  const tag = (name) => (activeIds.length > 1 ? ` (${name})` : '')
+
+  // Cada red aporta lo que de verdad publica: Instagram desglosa el flujo de
+  // seguidores, TikTok no puede, pero sí dice cuánta gente nueva le vio.
+  const lines = [
+    ['Creștere netă', fmtSignedInt(row.netGrowth)],
+    ...(hasIg
+      ? [
+          [`Abonări${tag('IG')}`, fmtInt(row.follows)],
+          [`Dezabonări${tag('IG')}`, fmtInt(row.unfollows)],
+        ]
+      : []),
+    ...(hasTt ? [[`Spectatori noi${tag('TikTok')}`, fmtInt(row.newViewers)]] : []),
+    ['Cost pe urmăritor', fmtEur2(row.costPerPaidFollower)],
+    ['Rată de creștere', fmtPct(row.growthRate, 2)],
+  ]
 
   return (
     <Card className={`p-5 ${partial ? 'border-dashed' : ''}`} delay={delay}>
@@ -46,19 +66,22 @@ function QuarterCard({ row, previous, delay }) {
       </div>
 
       <dl className="mt-4 space-y-2 border-t border-ink-100 pt-3 text-sm">
-        {[
-          ['Creștere netă', fmtSignedInt(row.netGrowth)],
-          ['Abonări (IG)', fmtInt(row.follows)],
-          ['Dezabonări (IG)', fmtInt(row.unfollows)],
-          ['Cost pe urmăritor', fmtEur2(row.costPerPaidFollower)],
-          ['Rată de creștere', fmtPct(row.growthRate, 2)],
-        ].map(([t, v]) => (
+        {lines.map(([t, v]) => (
           <div key={t} className="flex items-baseline justify-between gap-3">
             <dt className="text-ink-500">{t}</dt>
             <dd className="tnum font-semibold text-ink-900">{v}</dd>
           </div>
         ))}
       </dl>
+
+      {/* Por qué unas filas llevan «(IG)»: no es que falte TikTok, es que
+          TikTok no publica ese dato. Decirlo evita la pregunta. */}
+      {hasIg && hasTt ? (
+        <p className="mt-3 border-t border-ink-100 pt-3 text-xs leading-relaxed text-ink-400">
+          Creșterea netă include ambele rețele. TikTok publică doar netul, nu abonările și dezabonările
+          separat.
+        </p>
+      ) : null}
     </Card>
   )
 }
@@ -78,7 +101,13 @@ export default function Trimestrial({ year, networks, activeIds }) {
     <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {rows.map((row, i) => (
-          <QuarterCard key={row.quarter} row={row} previous={previousOf(i)} delay={i * 70} />
+          <QuarterCard
+            key={row.quarter}
+            row={row}
+            previous={previousOf(i)}
+            activeIds={activeIds}
+            delay={i * 70}
+          />
         ))}
       </div>
 
