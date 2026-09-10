@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Check, Database, Loader2, TriangleAlert } from 'lucide-react'
 import { NETWORKS, NETWORK_BY_ID } from '../../data/networks'
 import { OBJECTIVES, RESULT_FIELDS, STATUSES, STATUS_BY_ID } from '../../data/campaigns'
-import { MONTH_LABELS_LONG } from '../../data/calendar'
+import { MONTH_LABELS_LONG, yearOptions } from '../../data/calendar'
 import useDataset from '../../data/useDataset'
 import { fmtDec2, fmtEur2, fmtPct } from '../../data/selectors'
 import { refreshDataset } from '../../data/dataset'
@@ -37,7 +37,7 @@ const initialForm = (campaign, defaultYear) =>
         year: campaign.year,
         ...Object.fromEntries(RESULT_IDS.map((id) => [id, String(campaign[id] ?? '')])),
       }
-    : { ...EMPTY, year: defaultYear }
+    : { ...EMPTY, year: defaultYear ?? new Date().getFullYear() }
 
 const Field = ({ label, hint, children }) => (
   <label className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
@@ -68,7 +68,7 @@ export default function CampaignDrawer({ open, onClose, campaign, defaultYear })
 
   // Los años disponibles salen de los datos cargados, no de una constante.
   const { months: loadedMonths } = useDataset()
-  const years = [...new Set(loadedMonths.map((m) => m.year))]
+  const years = yearOptions([...new Set(loadedMonths.map((m) => m.year))])
 
   const set = (k, v) => {
     setForm((f) => ({ ...f, [k]: v }))

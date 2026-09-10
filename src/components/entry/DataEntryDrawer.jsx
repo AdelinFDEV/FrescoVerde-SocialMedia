@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Check, Database, Info, Loader2, TriangleAlert } from 'lucide-react'
 import { NETWORKS, NETWORK_BY_ID } from '../../data/networks'
 import { DERIVED_NOTE, ENTRY_FIELDS, METRICS } from '../../data/metrics'
-import { MONTH_LABELS_LONG } from '../../data/calendar'
+import { MONTH_LABELS_LONG, yearOptions } from '../../data/calendar'
 import { refreshDataset } from '../../data/dataset'
 import useDataset from '../../data/useDataset'
 import { STAT_FIELDS, explainError, statsRow } from '../../data/toDatabase'
@@ -54,7 +54,7 @@ function clearDraft() {
  */
 export default function DataEntryDrawer({ open, onClose, defaultYear }) {
   const [network, setNetwork] = useState('instagram')
-  const [year, setYear] = useState(defaultYear)
+  const [year, setYear] = useState(defaultYear ?? new Date().getFullYear())
   const [month, setMonth] = useState(new Date().getMonth())
   // El borrador se guarda en el navegador. Son dieciocho campos copiados a
   // mano: una recarga a medias no puede llevárselos por delante.
@@ -65,7 +65,7 @@ export default function DataEntryDrawer({ open, onClose, defaultYear }) {
   const [loadedPeriod, setLoadedPeriod] = useState(null)
 
   const { months: loadedMonths } = useDataset()
-  const years = [...new Set(loadedMonths.map((m) => m.year))]
+  const years = yearOptions([...new Set(loadedMonths.map((m) => m.year))])
 
   const fields = ENTRY_FIELDS[network]
   const keyOf = (id) => `${network}-${year}-${month}-${id}`

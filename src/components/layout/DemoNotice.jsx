@@ -4,46 +4,37 @@ import useDataset from '../../data/useDataset'
 /**
  * Aviso permanente de que el panel es una versión de prueba.
  *
- * El texto cambia con el origen de los datos: si están llegando de Supabase no
- * puede seguir diciendo que son inventados, porque sería mentira.
+ * Ya no hay datos inventados, así que el texto no puede decir que los haya: se
+ * limita a avisar de que el panel está en pruebas y a señalar lo que no cuadra
+ * en los datos reales.
  *
  * Va fijo y no se puede cerrar, a propósito. Se coloca donde no tape datos
  * —barra inferior en móvil y hueco libre de la barra lateral a partir de `lg`—
  * y queda por debajo de los formularios modales (z-40 frente a z-50).
  */
 export default function DemoNotice() {
-  const { source, error, incomplete, inconsistent, connected } = useDataset()
+  const { error, incomplete, inconsistent, months } = useDataset()
 
   const variant = error
     ? {
         icon: TriangleAlert,
         title: 'Datele nu s-au încărcat',
-        body: 'Baza de date nu a răspuns, așa că se afișează cifre inventate. Reîncarcă pagina pentru a încerca din nou.',
-        short: 'Baza de date nu a răspuns; cifrele afișate sunt inventate.',
+        body: 'Baza de date nu a răspuns. Reîncarcă pagina pentru a încerca din nou.',
+        short: 'Baza de date nu a răspuns.',
       }
-    : source === 'supabase'
+    : months.length
       ? {
           icon: Database,
           title: 'Versiune de test',
-          body: 'Cifrele vin din baza de date. Panoul este încă în probe și nu este public.',
-          short: 'Cifre reale din baza de date. Panou în probe, nepublic.',
+          body: 'Cifrele vin din baza de date. Panoul este pentru uz intern și nu este public.',
+          short: 'Cifre reale. Panou intern, în probe.',
         }
-      : connected
-        ? {
-            // Con las políticas de seguridad activas, «tabla vacía» y «sin
-            // permiso para leerla» se ven igual desde el navegador. Decirlo
-            // evita media hora buscando un fallo que no existe.
-            icon: Database,
-            title: 'Baza de date este goală',
-            body: 'Conexiunea funcționează, dar încă nu există nicio lună înregistrată, așa că se afișează cifre inventate. Dacă ai adăugat deja date, verifică politicile de securitate.',
-            short: 'Nicio lună înregistrată încă: cifrele sunt inventate.',
-          }
-        : {
-            icon: FlaskConical,
-            title: 'Versiune de test',
-            body: 'Toate cifrele din acest panou sunt inventate și servesc doar pentru a demonstra funcționarea. Nu reprezintă date reale.',
-            short: 'Toate cifrele sunt inventate, doar pentru demonstrație.',
-          }
+      : {
+          icon: FlaskConical,
+          title: 'Versiune de test',
+          body: 'Panoul este pentru uz intern și nu este public. Încă nu există luni înregistrate.',
+          short: 'Panou intern, în probe. Fără date încă.',
+        }
 
   const Icon = variant.icon
 

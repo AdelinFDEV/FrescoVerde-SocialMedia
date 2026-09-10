@@ -1,5 +1,9 @@
-import { DEMO_MONTHLY } from '../src/data/demoData.js'
+import { DEMO_CAMPAIGNS, DEMO_MONTHLY } from './fixtures/demo-data.mjs'
 import { aggregate, monthlyRows, quarterlyRows, annualRows, yearOverYear } from '../src/data/selectors.js'
+import { setDataset } from '../src/data/dataset.js'
+
+// Igual que en check-data: se parte de un juego de datos conocido.
+setDataset(DEMO_MONTHLY, DEMO_CAMPAIGNS)
 
 // Recálculo INDEPENDIENTE: se parte de los datos crudos y se calcula todo a
 // mano, sin usar ninguna función del panel. Si las dos vías coinciden, las

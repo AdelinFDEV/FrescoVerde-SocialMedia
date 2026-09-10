@@ -1,10 +1,15 @@
-import { monthMeta } from './calendar'
-import { OBJECTIVES } from './campaigns'
-import { NETWORKS } from './networks'
+import { monthMeta } from '../../src/data/calendar.js'
+import { OBJECTIVES } from '../../src/data/campaigns.js'
+import { NETWORKS } from '../../src/data/networks.js'
 
 /**
- * Datos de demostración deterministas (LCG con semilla fija) para que el panel
- * sea estable entre recargas. Se sustituyen conectando Supabase; ver README.
+ * BANCO DE PRUEBAS — esto NO forma parte de la aplicación.
+ *
+ * Datos deterministas (LCG con semilla fija) que vive fuera de `src/` a
+ * propósito: el panel nunca los importa, así que no llegan al navegador ni
+ * pueden confundirse con cifras reales. Solo los usan las verificaciones
+ * (`npm run check`), que necesitan un juego de datos conocido y perfecto para
+ * comprobar que los cálculos dan lo que deben.
  *
  * Dos orígenes distintos, como en la realidad:
  *  - Estadísticas de la app (Instagram / TikTok): audiencia, interacciones y

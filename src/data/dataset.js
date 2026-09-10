@@ -1,31 +1,29 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { campaignsFromDatabase, monthsFromDatabase } from './fromDatabase'
-import { DEMO_CAMPAIGNS, DEMO_MONTHLY } from './demoData'
 
 /**
- * De dónde salen los datos del panel.
+ * De dónde salen los datos del panel: de Supabase y de ningún otro sitio.
  *
- * Sin `.env.local` configurado, o si la consulta falla, se usan los datos de
- * demostración: el panel siempre enseña algo, y el aviso fijo de la esquina
- * dice con claridad cuál de los dos está viendo el usuario.
+ * No hay datos de relleno. Si la base de datos está vacía, el panel lo dice y
+ * no enseña nada — inventarse cifras para que «se vea algo» es justo lo que no
+ * puede hacer una herramienta con la que se toman decisiones.
  *
  * Los selectores leen de aquí en vez de importar una constante, porque los
  * datos ya no se conocen al cargar el módulo: llegan por red. La lectura pasa
  * por `useDataset`, que conecta este almacén externo con React.
  */
 
-const DEMO = {
-  months: DEMO_MONTHLY,
-  campaigns: DEMO_CAMPAIGNS,
-  source: 'demo',
-  status: 'ready',
+const EMPTY = {
+  months: [],
+  campaigns: [],
+  status: isSupabaseConfigured ? 'loading' : 'ready',
   incomplete: [],
   inconsistent: [],
   error: null,
   connected: false,
 }
 
-let current = DEMO
+let current = EMPTY
 const listeners = new Set()
 
 function publish(next) {
@@ -40,15 +38,18 @@ export const subscribe = (fn) => {
 
 export const getSnapshot = () => current
 
+/**
+ * Carga un juego de datos a mano. Solo lo usan las verificaciones
+ * (`npm run check`), que necesitan partir de cifras conocidas.
+ */
+export function setDataset(months, campaigns) {
+  publish({ ...EMPTY, months, campaigns, status: 'ready' })
+}
+
 /* ---- Lo que consumen los selectores ------------------------------------ */
 
 export const months = () => current.months
 export const campaigns = () => current.campaigns
-export const years = () => [...new Set(current.months.map((m) => m.year))]
-export const currentYear = () => {
-  const list = years()
-  return list[list.length - 1]
-}
 
 /* ---- Carga ------------------------------------------------------------- */
 
@@ -82,17 +83,9 @@ async function fetchDataset({ showLoading }) {
 
     const { months: loaded, incomplete, inconsistent } = monthsFromDatabase(stats.data ?? [])
 
-    // Una base de datos vacía no es un error: aún no se ha metido nada. Se
-    // sigue enseñando la demostración hasta que haya un mes completo.
-    if (!loaded.length) {
-      publish({ ...DEMO, status: 'ready', source: 'demo', incomplete, inconsistent, connected: true })
-      return
-    }
-
     publish({
       months: loaded,
       campaigns: campaignsFromDatabase(camps.data ?? []),
-      source: 'supabase',
       status: 'ready',
       incomplete,
       inconsistent,
@@ -100,6 +93,6 @@ async function fetchDataset({ showLoading }) {
       connected: true,
     })
   } catch (error) {
-    publish({ ...DEMO, error: error.message ?? String(error), connected: true })
+    publish({ ...EMPTY, status: 'ready', error: error.message ?? String(error), connected: true })
   }
 }

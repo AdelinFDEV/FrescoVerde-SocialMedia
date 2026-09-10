@@ -1,4 +1,4 @@
-import { DEMO_CAMPAIGNS as CAMPAIGNS, DEMO_MONTHLY as MONTHLY } from '../src/data/demoData.js'
+import { DEMO_CAMPAIGNS as CAMPAIGNS, DEMO_MONTHLY as MONTHLY } from './fixtures/demo-data.mjs'
 import { METRICS, METRIC_IDS, reports } from '../src/data/metrics.js'
 import { monthsFromDatabase } from '../src/data/fromDatabase.js'
 import {
@@ -11,6 +11,11 @@ import {
   quarterlyRows,
   yearOverYear,
 } from '../src/data/selectors.js'
+import { setDataset } from '../src/data/dataset.js'
+
+// El panel ya no trae datos de relleno: los selectores leen del almacén, así
+// que aquí se carga a mano el juego de pruebas.
+setDataset(MONTHLY, CAMPAIGNS)
 
 const IDS = ['instagram', 'tiktok']
 const errs = []

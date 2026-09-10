@@ -23,3 +23,16 @@ export function monthMeta(year, month) {
     fullLabel: `${MONTH_LABELS_LONG[month]} ${year}`,
   }
 }
+
+/**
+ * Años que se ofrecen en los formularios.
+ *
+ * Con la base de datos vacía no hay años que listar, así que se ofrecen el
+ * actual y los dos anteriores: hay que poder meter el primer mes, y también
+ * el histórico que ya se tenga.
+ */
+export function yearOptions(loadedYears = []) {
+  const now = new Date().getFullYear()
+  const base = [now - 2, now - 1, now]
+  return [...new Set([...base, ...loadedYears])].sort((a, b) => a - b)
+}

@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import DataEntryDrawer from './components/entry/DataEntryDrawer'
 import DemoNotice from './components/layout/DemoNotice'
+import EmptyState from './components/layout/EmptyState'
 import MobileNav from './components/layout/MobileNav'
 import Sidebar from './components/layout/Sidebar'
 import Topbar from './components/layout/Topbar'
@@ -45,6 +46,7 @@ export default function App() {
 
   const years = useMemo(() => [...new Set(data.months.map((m) => m.year))], [data.months])
   const year = years.includes(pickedYear) ? pickedYear : years[years.length - 1]
+  const hasData = years.length > 0
 
   // El color sigue a la red, no a su posición: filtrar no repinta la visible.
   const networks = useMemo(() => NETWORKS.filter((n) => activeIds.includes(n.id)), [activeIds])
@@ -85,12 +87,22 @@ export default function App() {
         />
 
         <main className="flex-1 px-4 py-5 sm:px-8 sm:py-6">
-          {/* La key fuerza el remontaje: cada cambio de vista o de año reanima. */}
-          <div key={`${view}-${year}`} className="mx-auto max-w-[1400px]">
-            <Suspense fallback={<Loading />}>
-              <View year={year} networks={networks} activeIds={activeIds} />
-            </Suspense>
-          </div>
+          {/* Sin ninguna lună completa no hay nada que dibujar: las secciones
+              esperan al menos un año de datos, así que ni se montan. */}
+          {hasData ? (
+            // La key fuerza el remontaje: cada cambio de vista o de año reanima.
+            <div key={`${view}-${year}`} className="mx-auto max-w-[1400px]">
+              <Suspense fallback={<Loading />}>
+                <View year={year} networks={networks} activeIds={activeIds} />
+              </Suspense>
+            </div>
+          ) : (
+            <EmptyState
+              error={data.error}
+              incomplete={data.incomplete}
+              onAddData={() => setEntryOpen(true)}
+            />
+          )}
         </main>
 
         {/* El hueco extra deja sitio al aviso fijo de versión de prueba. */}

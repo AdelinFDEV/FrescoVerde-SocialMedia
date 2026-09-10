@@ -123,9 +123,10 @@ campañas, que la comunidad sea continua entre meses, que un saldo no se sume,
 que una métrica de una sola red no se agregue como si fuera de las dos, y que el
 traductor de Supabase no pierda ningún campo por un nombre mal escrito.
 
-**`check:math`** — un **recálculo independiente**. Parte de los datos crudos y
-calcula cada indicador a mano, sin usar ninguna función del panel, y compara las
-dos vías en los tres años. Si una fórmula estuviera mal, las cifras no
+**`check:math`** — un **recálculo independiente**. Parte de un juego de datos de
+prueba ([`scripts/fixtures`](scripts/fixtures), que la aplicación nunca importa)
+y calcula cada indicador a mano, sin usar ninguna función del panel, comparando
+las dos vías en los tres años. Si una fórmula estuviera mal, las cifras no
 coincidirían. Comprueba además la identidad que lo ata todo:
 
 ```
@@ -136,8 +137,8 @@ y que los trimestres y el año den exactamente lo mismo que la suma de los meses
 
 ### Lo que el panel vigila con datos reales
 
-Los datos de demostración son perfectos por construcción; los reales no. Dos
-avisos aparecen en la esquina cuando algo no encaja:
+Los datos de prueba son perfectos por construcción; los reales no. Dos avisos
+aparecen en la esquina cuando algo no encaja:
 
 - **Un mes con datos de una sola red no se muestra.** Rellenar la que falta con
   ceros inventaría cifras y daría saltos falsos en los gráficos.
@@ -277,23 +278,36 @@ se salta las reglas de seguridad y en una app de navegador quedaría a la vista.
 
 ### De dónde lee el panel
 
-[`dataset.js`](src/data/dataset.js) decide el origen y lo publica a React con
+De Supabase y de ningún otro sitio. **No hay datos de relleno**: si la base de
+datos está vacía, el panel lo dice y no enseña nada. Inventarse cifras para que
+«se vea algo» es justo lo que no puede hacer una herramienta con la que se toman
+decisiones.
+
+[`dataset.js`](src/data/dataset.js) mantiene el estado y lo publica a React con
 `useSyncExternalStore`:
 
 | Situación | Qué se muestra |
 |---|---|
-| Sin `.env.local` | Datos de demostración |
-| Base de datos vacía | Datos de demostración |
-| Consulta fallida | Datos de demostración, con el aviso cambiado a advertencia |
-| Con datos | Los datos reales |
-
-El aviso fijo de la esquina **cambia de texto según el origen**: solo dice que
-las cifras son inventadas cuando de verdad lo son.
+| Sin `.env.local` | «Baza de date nu este configurată» |
+| Consulta fallida | «Datele nu s-au încărcat», con opción de recargar |
+| Base de datos vacía | «Încă nu există date» y el botón para añadirlos |
+| Con datos | El panel |
 
 Dos detalles del traductor ([`fromDatabase.js`](src/data/fromDatabase.js)): los
 meses pasan de 1-12 a 0-11, y **un mes al que le falte una red no se muestra**
 — rellenarla con ceros inventaría cifras y daría saltos falsos en los gráficos.
-Esos meses se cuentan en el aviso.
+Esos meses se cuentan en el aviso de la esquina.
+
+### Empezar de cero
+
+Para vaciar la base de datos por completo hay una herramienta manual:
+[`supabase/reset-datos.sql`](supabase/reset-datos.sql). Se pega en el SQL Editor
+y borra las dos tablas y su histórico.
+
+No es una migración y la aplicación no puede ejecutarla: el permiso de borrado
+está retirado para `anon` y `authenticated` a propósito. Funciona en el SQL
+Editor porque allí se ejecuta como dueño de la base de datos, donde sí hay que
+iniciar sesión de verdad.
 
 ### Acceso sin login
 
@@ -348,7 +362,6 @@ src/
     networks.js     redes, su color fijo y las paletas validadas
     campaigns.js    objetivos y estados de campaña
     calendar.js     meses en rumano
-    demoData.js     generador determinista de datos de demostración
     fromDatabase.js traduce las filas de Supabase a la forma del panel
     dataset.js      decide el origen de los datos y lo publica a React
     selectors.js    agregación mensual / trimestral / anual + formato ro-RO
@@ -363,9 +376,11 @@ src/
 scripts/
   check-data.mjs    13 verificaciones de coherencia de los cálculos
   check-math.mjs    recálculo independiente de cada indicador
+  fixtures/         datos de prueba de los scripts — no forman parte de la app
   hash-password.mjs genera la huella de la contraseña de acceso
 supabase/
   migrations/       el esquema de la base de datos
+  reset-datos.sql   vaciar todo y empezar de cero (manual)
 ```
 
 El logo está en `public/logo.png`.
