@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from 'react'
 import { Check, Menu, Plus } from 'lucide-react'
 import { NETWORKS } from '../../data/networks'
 import { VIEW_BY_ID } from '../../data/navigation'
@@ -6,8 +7,34 @@ import SegmentedControl from '../ui/SegmentedControl'
 export default function Topbar({ view, year, years, onYear, active, onToggleNetwork, onAddData, onOpenNav }) {
   const current = VIEW_BY_ID[view]
 
+  // En el móvil la barra va fija: no depende de que `sticky` se comporte, no
+  // se despega al rebotar el scroll y no la tapa la barra del navegador. Como
+  // sale del flujo, hace falta un hueco de su mismo alto — y su alto cambia
+  // (título de dos líneas, chips que envuelven), así que se mide en vez de
+  // fijarlo a ojo. En escritorio vuelve al flujo normal y el hueco desaparece.
+  const barRef = useRef(null)
+  const [height, setHeight] = useState(0)
+
+  useLayoutEffect(() => {
+    const el = barRef.current
+    if (!el) return
+    // La primera medida es síncrona, antes de pintar: si dependiera del
+    // observador, el primer fotograma saldría con el contenido bajo la barra.
+    const measure = () => setHeight(el.getBoundingClientRect().height)
+    measure()
+    // El observador solo se ocupa de lo que venga después: girar el teléfono,
+    // o los chips de red pasando a dos líneas.
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   return (
-    <header className="sticky top-0 z-20 border-b border-ink-100 bg-white">
+    <>
+    <header
+      ref={barRef}
+      className="fixed inset-x-0 top-0 z-30 border-b border-ink-100 bg-white lg:sticky lg:inset-x-auto lg:z-20"
+    >
       <div className="flex items-center gap-3 px-4 py-2 sm:px-8 sm:py-3.5">
         {/* En móvil las secciones viven en un panel: nueve pestañas en una fila
             obligarían a arrastrar a ciegas para llegar a la última. */}
@@ -78,5 +105,9 @@ export default function Topbar({ view, year, years, onYear, active, onToggleNetw
         })}
       </div>
     </header>
+
+    {/* El hueco que deja la barra fija. En escritorio no hace falta. */}
+    <div style={{ height }} className="lg:hidden" aria-hidden="true" />
+    </>
   )
 }
