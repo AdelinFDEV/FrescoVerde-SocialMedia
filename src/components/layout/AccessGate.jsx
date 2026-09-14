@@ -88,9 +88,9 @@ export default function AccessGate({ children }) {
         </form>
 
         <p className="mt-4 text-center text-xs leading-relaxed text-ink-200">
-          Versiune de test · date pentru uz intern
+          Aplicație funcțională · date reale, uz intern
           <br />
-          Realizat de George Adelin
+          Creat de George Adelin
         </p>
       </div>
     </div>

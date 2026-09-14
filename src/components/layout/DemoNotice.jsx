@@ -126,7 +126,7 @@ export default function DemoNotice() {
           </p>
 
           <p className="mt-1 text-[11px] font-medium text-ink-300 sm:mt-1.5 sm:text-xs">
-            Versiune de test · uz intern · George Adelin
+            Uz intern · Creat de George Adelin
           </p>
         </div>
       </div>

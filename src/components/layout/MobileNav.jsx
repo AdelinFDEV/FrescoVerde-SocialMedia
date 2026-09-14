@@ -58,7 +58,8 @@ export default function MobileNav({ open, onClose, view, onChange }) {
       <div className="mt-6 flex items-center gap-2.5 border-t border-ink-100 pt-4">
         <Logo size={24} />
         <p className="text-xs leading-relaxed text-ink-400">
-          Versiune de test · date demonstrative până la primele luni înregistrate
+          Aplicație funcțională · date reale, actualizate lunar
+          <span className="mt-0.5 block text-ink-500">Creat de George Adelin</span>
         </p>
       </div>
     </Drawer>
